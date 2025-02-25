@@ -1,4 +1,4 @@
-from argu import ABAF
+from aba_formalism import ABAF
 import sys
 
 framework_filename = "examples/ABA_ICCMA_input.txt"

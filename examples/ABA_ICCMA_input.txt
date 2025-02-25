@@ -1,0 +1,18 @@
+# Example. The ABA framework with rules 
+# p :- q,a.
+# q :- .
+# r :- b,c. 
+# assumptions a,b,c
+# contraries a̅ = r, b̅ = s, c̅ = t 
+# is specified as follows, with atom-indexing a=1, b=2, c=3, p=4, q=5, r=6, s=7, t=8.
+
+p aba 8
+a 1
+a 2
+a 3
+c 1 6
+c 2 7
+c 3 8
+r 4 5 1
+r 5
+r 6 2 3

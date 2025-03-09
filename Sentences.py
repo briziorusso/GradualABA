@@ -1,8 +1,7 @@
 class Assumptions:
-    def __init__(self, name, initial_weight, contrary, strength=None, attackers=None, supporters=None):
+    def __init__(self, name, initial_weight, strength=None, attackers=None, supporters=None):
         self.name = name
         self.initial_weight = initial_weight
-        self.contrary = contrary
         self.strength = strength
         self.attackers = attackers
         self.supporters = supporters

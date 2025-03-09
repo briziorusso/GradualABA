@@ -1,82 +1,49 @@
-import sys
-import os
-from .Assumptions import Assumptions
-from .Sentences import Sentences
-from .Rules import Rules
+from Rule import Rule
 
 class ABAF:
-    def __init__(self, path=None):
-        self.assumptions = set()
-        self.rules = []
-        self.sentences = set()
+    """Represents an Assumption-Based Argumentation Framework (ABAF)."""
 
+    def __init__(self, assumptions=None, rules=None):
+        """
+        assumptions: A set of assumptions (optional, default is empty).
+        rules: A list of Rule objects (optional, default is empty).
+        """
+        self.assumptions = assumptions if assumptions else {}
+        self.rules = rules if rules else []
+        self.assumption_set = set(self.assumptions.keys())
 
-class ABAF:
-    def __init__(self, a = set(), c = dict(), rd = dict(),
-            # q = list(), 
-            s = set(), h = dict(), b = dict()):
+    def add_rule(self, head, body=None, name=None):
+        rule = Rule(head, body, name)
+        self.rules.append(rule)
 
-        self.assumptions = a
-        self.contrary = c
-        self.rules_deriving = rd
-        # self.queries = q
-        self.sentences = s
-        self.heads = h
-        self.bodies = b
+    def add_assumption(self, assumption, contrary=None):
+        """Add an assumption and its contrary."""
+        self.assumption_set.add(assumption)
+        self.assumptions[assumption] = contrary
 
-    # create an ABAF from a file, using the ICCMA format
-    # INPUT RESTRICTIONS: a single contrary per assumption
-    def create_from_file(self, framework_filename):
-        with open(framework_filename, "r") as f:
-            text = f.read().split("\n")
-        for line in text:
-            if line.startswith("a "):
-                self.assumptions.add(str(line.split()[1]))
-            if line.startswith("c "):
-                components = line.split()
-                self.contrary[str(components[1])] = [components[2]]
+    def collect_sentences(self):
+        """Collect all sentences (atoms, assumptions, contraries, and rule components)."""
+        sentences = set(self.assumption_set) # Start with assumptions
 
-        # only one contrary!
-        self.rules_deriving = {ctr_list[0] : [] for ctr_list in self.contrary.values() if ctr_list[0] not in self.assumptions}
-        # Assumptions have empty set, used for SCC detection
-        for asmpt in self.assumptions:
-            self.rules_deriving[asmpt] = list()
+        # Add contraries (avoid adding None)
+        for contrary in self.assumptions.values():
+            if contrary is not None:
+                sentences.add(contrary)
 
-        self.sentences.update(self.assumptions)
-        # self.sentences.update(self.queries)
-        print(self.sentences)
-        for ctr_list in self.contrary.values():
-            self.sentences.add(ctr_list[0])
+        # Add head and body of rules
+        for rule in self.rules:
+            if rule.head:
+                sentences.add(rule.head) 
+            sentences.update(rule.body) 
 
-        self.rule_indices = []
-        self.heads = dict()
-        self.bodies = dict()
-        rule_index = 0
-        for line in text:
-            if line.startswith("r "):
-                components = line.split()[1:]
-                head, body = str(components[0]), components[1:]
-                self.rule_indices.append(str(rule_index))
-                self.heads[str(rule_index)] = head
-                if head in self.rules_deriving:
-                    self.rules_deriving[head].append(str(rule_index))
-                else:
-                    self.rules_deriving[head] = [str(rule_index)]
+        return sentences
 
-                self.bodies[str(rule_index)] = {str(b) for b in body}
-                self.sentences.add(head)
-                self.sentences.update(set(body))
-                for b in body:
-                    if not b in self.assumptions and not b in self.rules_deriving:
-                        self.rules_deriving[b] = []
+    def __str__(self):
+        """User-friendly string representation of the ABAF."""
+        contraries_str = "\n".join(f"-{k} = {v}" for k, v in self.assumptions.items())
+        rules_str = "\n".join(map(str, self.rules))
+        return f"\nAssumptions: {",".join(map(str,self.assumption_set))}\n\nContraries:\n{contraries_str}\n\nRules:\n{rules_str}\n"
 
-                rule_index += 1
-    
-    def print_ABA(self):
-        # print ABAF
-        print("Assumptions: ", self.assumptions)
-        print("Contraries: ", self.contrary)
-        print("Rules deriving: ", self.rules_deriving)
-        print("Sentences: ", self.sentences)
-        print("Heads: ", self.heads)
-        print("Bodies: ", self.bodies)
+    def __repr__(self):
+        """Technical string representation of the ABAF."""
+        return f"ABAF(Assumptions={self.assumption_set}, Rules={self.rules}, Contraries={self.assumptions})"

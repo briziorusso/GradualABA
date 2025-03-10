@@ -1,49 +1,61 @@
 from Rule import Rule
+from Assumption import Assumption
+from Sentence import Sentence
+from constants import DEFAULT_WEIGHT
+
 
 class ABAF:
     """Represents an Assumption-Based Argumentation Framework (ABAF)."""
 
     def __init__(self, assumptions=None, rules=None):
         """
-        assumptions: A set of assumptions (optional, default is empty).
+        assumptions: A list of Assumption objects (optional, default is empty).
         rules: A list of Rule objects (optional, default is empty).
         """
-        self.assumptions = assumptions if assumptions else {}
+        self.assumptions = assumptions if assumptions else []
         self.rules = rules if rules else []
-        self.assumption_set = set(self.assumptions.keys())
+        self.assumption_set = set(assumption.name for assumption in self.assumptions)
 
-    def add_rule(self, head, body=None, name=None):
+    def add_rule(self, head: Sentence, body=None, name=None):
         rule = Rule(head, body, name)
         self.rules.append(rule)
 
-    def add_assumption(self, assumption, contrary=None):
-        """Add an assumption and its contrary."""
-        self.assumption_set.add(assumption)
-        self.assumptions[assumption] = contrary
+    def add_rules(self, rule_set):
+        """Add multiple rules at once."""
+        self.rules.extend(rule_set)
+
+    def add_assumption(self, assumption: Assumption):
+        """Add an assumption object."""
+        self.assumption_set.add(assumption.name)
+        self.assumptions.append(assumption)
+    
+    def add_assumptions(self, new_assumption_set):
+        """Add multiple assumptions at once."""
+        self.assumptions.extend(new_assumption_set) 
+        self.assumption_set.update(assumption.name for assumption in new_assumption_set) 
 
     def collect_sentences(self):
-        """Collect all sentences (atoms, assumptions, contraries, and rule components)."""
-        sentences = set(self.assumption_set) # Start with assumptions
+        sentences = set() 
 
-        # Add contraries (avoid adding None)
-        for contrary in self.assumptions.values():
-            if contrary is not None:
-                sentences.add(contrary)
+        # Add contraries and assumptions (avoid adding None)
+        for assumption in self.assumptions:
+            sentences.add(assumption)
+            if assumption.contrary is not None:
+                sentences.add(Sentence(assumption.contrary))
 
         # Add head and body of rules
         for rule in self.rules:
-            if rule.head:
-                sentences.add(rule.head) 
-            sentences.update(rule.body) 
+            sentences.add(rule.head)
+            sentences.update(rule.body)
 
-        return sentences
+        return list(sentences)
 
     def __str__(self):
         """User-friendly string representation of the ABAF."""
-        contraries_str = "\n".join(f"-{k} = {v}" for k, v in self.assumptions.items())
+        contraries_str = "\n".join(f"-{assumption.name} = {assumption.contrary}" for assumption in self.assumptions)
         rules_str = "\n".join(map(str, self.rules))
-        return f"\nAssumptions: {",".join(map(str,self.assumption_set))}\n\nContraries:\n{contraries_str}\n\nRules:\n{rules_str}\n"
+        return f"\nAssumptions: {', '.join(f"{assumption.name}[{assumption.weight}]" for assumption in self.assumptions)}\n\nContraries:\n{contraries_str}\n\nRules:\n{rules_str}\n"
 
     def __repr__(self):
         """Technical string representation of the ABAF."""
-        return f"ABAF(Assumptions={self.assumption_set}, Rules={self.rules}, Contraries={self.assumptions})"
+        return f"ABAF(Assumptions={self.assumptions}, Rules={self.rules})"

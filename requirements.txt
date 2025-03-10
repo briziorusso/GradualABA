@@ -1,1 +1,4 @@
 networkx
+matplotlib
+numpy
+PyQt6 # for plots

@@ -1,9 +1,11 @@
-class Rule:
-    
-    _used_identifiers = set() 
-    _counter = 1 
+from Sentence import Sentence
+from constants import DEFAULT_WEIGHT
 
-    def __init__(self, head, body=None, name=None):
+class Rule:
+    _used_identifiers = set()
+    _counter = 1
+
+    def __init__(self, head: Sentence, body=None, name=None):
         if not head:
             raise ValueError("Head must be specified.")
 
@@ -15,18 +17,24 @@ class Rule:
             raise ValueError(f"Rule identifier '{name}' already exists. Choose a unique name.")
 
         self.name = name
-        self.head = head 
-        self.body = body if body else set()
+        self.head = head
+        self.body = body if body else []
+        self.weight = DEFAULT_WEIGHT  # Use the default weight
 
         # Register the identifier as used
         Rule._used_identifiers.add(name)
 
     def __repr__(self):
-        body_str = ", ".join(self.body) if self.body else ""
+        body_str = ", ".join([str(sentence.name) for sentence in self.body]) if self.body else ""
         if body_str:
-            return f"{self.name}: {self.head} :- {body_str}."
+            return f"{self.name}[{self.weight}]: {self.head.name} :- {body_str}."
         else:
-            return f"{self.name}: {self.head}."
+            return f"{self.name}[{self.weight}]: {self.head.name}."
+
+    def update_weight(self, new_weight):
+        if not isinstance(new_weight, (int, float)):
+            raise TypeError("new_weight must be of type integer or float")
+        self.weight = new_weight
 
     @classmethod
     def reset_identifiers(cls):

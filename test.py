@@ -1,50 +1,40 @@
+import matplotlib.pyplot as plt
+
 from Rule import Rule
+from Assumption import Assumption
+from Sentence import Sentence
 from ABAF import ABAF
-
-# Rule 1 with custom name and body
-rule1 = Rule(head="p", name="CustomRule1", body={"q", "r"})
-print(rule1)  # CustomRule1: p ← q, r
-
-# Rule 2 with default name (Rule2) and no body
-rule2 = Rule(head="s")
-print(rule2)  # Rule2: s
-
-# Rule 3 with default name (Rule3) and a custom body
-rule3 = Rule(head="t", body={"p"})
-print(rule3)  # Rule3: t ← p
-
-# Rule with no name provided will automatically generate Rule4
-rule4 = Rule(head="u", body={"p", "q"})
-print(rule4)  # Rule4: u ← p, q
-
-def test_abaf_framework():
-    # Create an ABAF instance with no assumptions or rules
-    abaf = ABAF()
-
-    # Add assumptions and contraries
-    abaf.add_assumption("p")
-    abaf.add_assumption("q", "¬q")
-
-    # Add custom rules
-    abaf.add_rule(head="p", body={"q", "r"})
-    abaf.add_rule(head="s", body={"t"})
-    abaf.add_rule(head="t", name=3)
-    
-    # Collect all sentences (atoms, assumptions, contraries, rules' heads/ bodies)
-    sentences = abaf.collect_sentences()
-    print("Collected Sentences:", sentences)
-    
-    # Print ABAF object using __str__()
-    print(abaf)
-
-    # Print ABAF object using __repr__()
-    print(repr(abaf))
-
-if __name__ == "__main__":
-    test_abaf_framework()
-
 from parser.asp_parser import ASPParser
+from DependencyGraph import DependencyGraph
+from constants import DEFAULT_WEIGHT
 
+# Define sentences
+p = Sentence("p")
+q = Sentence("q")
+r = Sentence("r")
+s = Sentence("s")
+t = Sentence("t")
+
+# Define assumptions
+u = Assumption("u", weight=DEFAULT_WEIGHT)
+asn2 = Assumption("v", contrary="p", weight=DEFAULT_WEIGHT)
+
+print("This is the weight of u: ", u.weight, "\n\n")
+
+# Define rules
+rule1 = Rule(head=p, name="rule1", body=[q, r])
+print(rule1)  # rule1: p :- q, r.
+
+rule2 = Rule(head=s, name="rule2")
+print(rule2)  # rule2: s.
+
+rule3 = Rule(head=t, name="rule3", body=[p])
+print(rule3)  # rule3: t :- p.
+
+rule4 = Rule(head=u, name="rule4", body=[p, q])
+print(rule4)  # rule4: u :- p, q.
+
+# Input string for ASP parser
 input_str = """
 assumption(a).
 assumption(b).
@@ -54,6 +44,7 @@ contrary(b,x).
 
 head(1, p).
 body(1,q).
+body(1,a ).
 
 head(2, p ).
 body(2,b).
@@ -64,6 +55,41 @@ head(3,x).
 # Parse the input string
 abafnn = ASPParser.parse(input_str)
 
+# Add assumptions and rules to the ABAF instance
+abafnn.add_assumption(u)
+abafnn.add_assumption(asn2)
+abafnn.add_rules([rule1, rule2, rule3, rule4])
+
 # Print the ABAF object
 print(abafnn)
 print(repr(abafnn))
+
+# Directly access and print the assumptions
+assumptions = abafnn.assumptions
+print("Assumptions:", assumptions)
+for assumption in assumptions:
+    print(assumption.name, assumption.contrary, assumption.weight)
+
+# Collect and print the sentences
+sentences = abafnn.collect_sentences()
+print("Sentences:", sentences)
+for sentence in sentences:
+    print(sentence.name, sentence.weight)
+
+# Create and visualize the dependency graph
+dep_graph = DependencyGraph()
+dep_graph.construct_from_abaf(abafnn)
+print(dep_graph)
+
+# Update node weights
+dep_graph.update_node_weight("a", 0.8)
+dep_graph.update_nodes_weights({"q": 0.6, "r": 0.7, "rule1": 0.9})
+print("Updated graph:")
+print(dep_graph)
+
+# Update ABAF weights based on the graph
+dep_graph.update_abaf_weights(abafnn)
+print("Updated ABAF:")
+print(abafnn)
+
+# dep_graph.draw()

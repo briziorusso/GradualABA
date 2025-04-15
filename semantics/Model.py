@@ -1,4 +1,3 @@
-# meta framework model for semantics. wir definieren die solve function, die dann den gewählten approximator aufruft (in algorithms), mit der gewählten semantics
 
 
 class Model:

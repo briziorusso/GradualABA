@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
 
-from Rule import Rule
-from Assumption import Assumption
-from Sentence import Sentence
-from ABAF import ABAF
-from parser.asp_parser import ASPParser
-from DependencyGraph import DependencyGraph
+from ABAF.Rule import Rule
+from ABAF.Assumption import Assumption
+from ABAF.Sentence import Sentence
+from ABAF.ABAF import ABAF
+from ABAF.parser.asp_parser import ASPParser
+from ABAF.DependencyGraph import DependencyGraph
 from constants import DEFAULT_WEIGHT
 
 # Define sentences

@@ -1,12 +1,11 @@
 import re
-from Rule import Rule
-from Assumption import Assumption
-from Sentence import Sentence
-from ABAF import ABAF
+from .. import Rule
+from .. import Assumption
+from .. import Sentence
+from .. import ABAF
 
 class ASPParser:
-    """Parser for the ASP-inspired ABA format."""
-    
+
     @staticmethod
     def parse(input_str):
         assumptions = []  # List of Assumption objects

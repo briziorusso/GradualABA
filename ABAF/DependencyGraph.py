@@ -1,5 +1,9 @@
 import networkx as nx
 from ABAF import ABAF
+import sys
+import os
+# Add the parent directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constants import DEFAULT_WEIGHT
 
 

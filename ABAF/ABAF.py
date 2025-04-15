@@ -1,17 +1,20 @@
-from Rule import Rule
-from Assumption import Assumption
-from Sentence import Sentence
+## TODO: functions for converting ABAF to BSAF and BAG (BAG means BAF)
+
+from .Rule import Rule
+from .Assumption import Assumption
+from .Sentence import Sentence
+from BAG import BAG
+
+import sys
+import os
+# Add the parent directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from constants import DEFAULT_WEIGHT
 
 
-class ABAF:
-    """Represents an Assumption-Based Argumentation Framework (ABAF)."""
 
+class ABAF:
     def __init__(self, assumptions=None, rules=None):
-        """
-        assumptions: A list of Assumption objects (optional, default is empty).
-        rules: A list of Rule objects (optional, default is empty).
-        """
         self.assumptions = assumptions if assumptions else []
         self.rules = rules if rules else []
         self.assumption_set = set(assumption.name for assumption in self.assumptions)
@@ -49,13 +52,24 @@ class ABAF:
             sentences.update(rule.body)
 
         return list(sentences)
+    
+    def to_bsaf(self):
+        """ABAF into BSAF"""
+        # TODO! 
+        attacks = {}
+        supports = {}
+        return attacks, supports
+
+    def to_bag(self):
+        """ABAF into BAF (resp BAG)"""
+        # TODO! 
+        bag = BAG()
+        return bag
 
     def __str__(self):
-        """User-friendly string representation of the ABAF."""
         contraries_str = "\n".join(f"-{assumption.name} = {assumption.contrary}" for assumption in self.assumptions)
         rules_str = "\n".join(map(str, self.rules))
         return f"\nAssumptions: {', '.join(f"{assumption.name}[{assumption.weight}]" for assumption in self.assumptions)}\n\nContraries:\n{contraries_str}\n\nRules:\n{rules_str}\n"
 
     def __repr__(self):
-        """Technical string representation of the ABAF."""
         return f"ABAF(Assumptions={self.assumptions}, Rules={self.rules})"

@@ -16,7 +16,7 @@ model.approximator = grad.algorithms.RK4(model)
 # transform ABAF to BAG
 # set BAG
 
-model.BAG = grad.BAG("bags/stock_example.bag")
+model.BAG = grad.BAG("examples/stock_example.bag")
 
 model.solve(delta=10e-2, epsilon=10e-6, verbose=True, generate_plot=False)
 

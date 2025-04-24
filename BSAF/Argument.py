@@ -92,7 +92,8 @@ class Argument:
 
     def __str__(self):
         body = ', '.join(a.name for a in self.body)
-        return f"{self.head} <- [{body}]"
+        # return f"{self.head} <- [{body}]"
+        return f"({[body]},{self.head})"
     
     def __hash__(self):
         return hash((self.head, frozenset(self.body)))

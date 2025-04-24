@@ -300,6 +300,8 @@ class ABAF:
         # register arguments
         for arg in args:
             bag.arguments[arg.name] = arg
+            bodylist = ",".join(premise.name for premise in arg.body)
+            print(f"{arg.name}: ([{bodylist}],{arg.head})")
         print("Creting BAF: Extracting relations between arguments...")
         # build supports and attacks between arguments
         for a1 in args:

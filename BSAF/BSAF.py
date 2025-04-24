@@ -27,8 +27,8 @@ class BSAF:
         # Extract relations from arguments
         for arg in self.arguments:
             coalition = frozenset(arg.body)
-            ## Filter out empty coalitions and sets that contain a sentence that is not assumption (i.e. it can be derived)
-            if len(coalition) <= 1 or not all(a for a in coalition if a in self.assumptions):
+            ## Filter assumption arguments ({a},a) and sets that contain a sentence that is not assumption (i.e. it can be derived)
+            if (len(coalition) == 1 and arg.head in [a.name for a in arg.body]): # or not all(a for a in coalition if a in self.assumptions):
                 continue
             claim = arg.head
             # SUPPORT: argument's claim matches assumption name

@@ -23,7 +23,7 @@ class DependencyGraph:
                     node_type = 'assumption'
                 elif assumption.contrary == sentence.name:
                     node_type = 'contrary'
-            self.graph.add_node(sentence.name, type=node_type, weight=sentence.weight)
+            self.graph.add_node(sentence.name, type=node_type, weight=sentence.initial_weight)
 
         # Add rule nodes and edges
         for asm in abaf.assumptions:
@@ -56,10 +56,10 @@ class DependencyGraph:
         """Update the weights of the given ABAF based on the graph."""
         for assumption in abaf.assumptions:
             if assumption.name in self.graph.nodes:
-                assumption.weight = self.graph.nodes[assumption.name]['weight']
+                assumption.initial_weight = self.graph.nodes[assumption.name]['weight']
         for sentence in abaf.collect_sentences():
             if sentence.name in self.graph.nodes:
-                sentence.weight = self.graph.nodes[sentence.name]['weight']
+                sentence.initial_weight = self.graph.nodes[sentence.name]['weight']
         for rule in abaf.rules:
             if rule.name in self.graph.nodes:
                 rule.weight = self.graph.nodes[rule.name]['weight']

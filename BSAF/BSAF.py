@@ -1,108 +1,94 @@
 from .Argument import Argument
-
-def remove_duplicates(lst):
-    seen = set()
-    result = []
-    for item in lst:
-        if item not in seen:
-            result.append(item)
-            seen.add(item)
-    return result
-
-def sort_by_key(lst, order):
-    return sorted(lst, key=lambda x: order.index(x))
-
-
-# update to class BSAF. this is still very incomplete. 
+# from ABAF.Assumption import Assumption
 
 class BSAF:
-    def __init__(self, arguments=None):
-        # arguments: [a,b,c]
-        self.arguments = remove_duplicates(arguments) if arguments is not None else []
-        # we do not accept attacks and supports on this stage
-        # self.setAttacks = setAttacks if setAttacks is not None else {}
-        # self.setSupports = setSupports if setSupports is not None else {}
+    def __init__(self, arguments, assumptions):
+        """
+        Bipolar Set Argumentation Framework mapping sets of assumptions to single assumption targets.
 
-        # setAttacks and setSupports: {a: [[1,0,1],[0,1,1]], b: [0,1,1]], c: [[1,1,0]]}
-        self.setAttacks = {self.arguments[i]: [] for i in range(len(self.arguments))}
-        self.setSupports = {self.arguments[i]: [] for i in range(len(self.arguments))}
+        Args:
+          - assumptions: iterable of Assumption instances
+          - arg_asms_map: dict mapping Argument -> list of Assumption instances supporting it
+          - arg_head_map: dict mapping Argument -> claim string
 
-    def add_argument(self, argument):
-        if not isinstance(argument, Argument):
-            raise TypeError("argument must be of type Argument")
-        
-        if argument in self.arguments:
-            # do not add duplicate arguments
+        After initialization, self.supports and self.attacks map each assumption to a set of frozensets
+        (each frozenset is a coalition of assumptions supporting or attacking the key assumption).
+        """
+        # Validate inputs
+        if assumptions is None or arguments is None:
+            raise ValueError("assumptions and arguments are required")
+        # Store unique assumptions
+        self.assumptions = set(assumptions)
+        self.arguments = set(arguments)
+        # Initialize empty relations
+        self.supports = {asm: set() for asm in self.assumptions}
+        self.attacks  = {asm: set() for asm in self.assumptions}
+        print("Creting BSAF: Extracting relations from arguments...")
+        # Extract relations from arguments
+        for arg in self.arguments:
+            coalition = frozenset(arg.body)
+            ## Filter out empty coalitions and sets that contain a sentence that is not assumption (i.e. it can be derived)
+            if len(coalition) <= 1 or not all(a for a in coalition if a in self.assumptions):
+                continue
+            claim = arg.head
+            # SUPPORT: argument's claim matches assumption name
+            target = next((a for a in self.assumptions if a.name == claim), None)
+            if target:
+                self.supports[target].add(coalition)
+                continue
+            # ATTACK: argument's claim matches assumption.contrary
+            attacked = next((a for a in self.assumptions if a.contrary == claim), None)
+            if attacked:
+                self.attacks[attacked].add(coalition)
+
+    def add_attack(self, attackers, attacked):
+        """
+        attackers: iterable of Argument instances
+        attacked: single Argument instance
+        Records that attackers attack the attacked argument.
+        Only attackers that are in the assumptions. 
+        """
+        if attacked not in self.attacks:
+            raise ValueError("attacked argument not in framework")
+        # Filter valid assumption-based attackers
+        valid = frozenset(a for a in attackers if hasattr(a, 'name') and a in self.assumptions)
+        if not valid:
             return
-        else:   
-            self.arguments.append(argument)
-            self.setAttacks[argument] = []
-            self.setSupports[argument] = []
+        self.attacks[attacked].add(valid)
 
-    def add_attack(self, attacker, attacked):
-        # expect: attacker = [b,c], attacked = a
+    def add_support(self, supporters, supported):
+        """
+        supporters: iterable of Argument instances
+        supported: single Argument instance
+        Records that supporters support the supported argument.
+        Only supporters that are in the assumptions.
+        """
+        if supported not in self.supports:
+            raise ValueError("supported argument not in framework")
+        valid = frozenset(s for s in supporters if hasattr(s, 'name') and s in self.assumptions)
+        if not valid:
+            return
+        self.supports[supported].add(valid)
 
-        if not isinstance(attacked, Argument):
-            raise TypeError("attacked must be of type Argument")
+    def __repr__(self):
+        asum = sorted(a.name for a in self.assumptions)
+        sup_parts = [f"{asm.name}:[{','.join(sorted(c.name for c in coal))}]" \
+                     for asm, cols in self.supports.items() for coal in cols]
+        atk_parts = [f"{asm.name}:[{','.join(sorted(c.name for c in coal))}]" \
+                     for asm, cols in self.attacks.items() for coal in cols]
+        return (
+            f"BSAF(Assumptions={asum}, "
+            f"\nSupports={{" + ",".join(sup_parts) + "}}, "
+            f"\nAttacks={{" + ",".join(atk_parts) + "}})"
+        )
 
-        if not isinstance(attacker, list):
-            raise TypeError("attacker must be a list of Arguments")
-        
-        for arg in attacker:
-            if not isinstance(arg, Argument):
-                raise TypeError("each attacker in list must be of type Argument")
-            
-            if arg not in self.arguments:
-                self.add_argument(arg)
-        
-        if attacked not in self.arguments:
-            self.add_argument(attacked)
-
-        # sort attacker by order of arguments
-        attacker_sorted = sort_by_key(attacker, self.arguments)
-        # check if attacker_sorted is in setAttacks of attacked
-        if attacker_sorted not in self.setAttacks[attacked]:
-            self.setAttacks[attacked].append(attacker_sorted)
-
-    def add_support(self, supporter, supported):
-
-        if not isinstance(supported, Argument):
-            raise TypeError("supported must be of type Argument")
-        if not isinstance(supporter, list):
-            raise TypeError("supporter must be a list of Arguments")    
-        for arg in supporter: 
-            if not isinstance(arg, Argument):
-                raise TypeError("each supporter in list must be of type Argument")
-            
-            if arg not in self.arguments:
-                self.add_argument(arg)
-        if supported not in self.arguments:
-            self.add_argument(supported)
-            
-        supporter_sorted = sort_by_key(supporter, self.arguments)
-        if supporter_sorted not in self.setAttacks[supported]:
-            self.setSupports[supported].append(supporter_sorted)
-    
-
-
-    def __repr__(self) -> str:
-        return f"BSAF:\nArguments: {self.arguments}\nAttacks: {self.setAttacks}\nSupports: {self.setSupports}"
-    
     def __str__(self):
-        attacks = []
-        supports = []
-        for argument in self.arguments:
-            for setattack in self.setAttacks[argument]:
-                tmp = ",".join([arg.name for arg in setattack])
-                tmp2 = "({"+tmp + "},"+argument.name+")"
-                attacks.append(tmp2)
-
-            for set in self.setSupports[argument]:
-                tmp = ",".join([arg.name for arg in set])
-                tmp2 = "({"+tmp + "},"+argument.name+")"
-                supports.append(tmp2)
-
-        args = ",".join([args.name for args in self.arguments])
-        atts = ",".join(attacks)
-        supps = ",".join(supports)
-        return f"BSAF: Arguments: {args}\nAttacks: {atts}\nSupports: {supps}"
+        lines = []
+        for asm in sorted(self.assumptions, key=lambda x: x.name):
+            for coal in self.supports.get(asm, []):
+                names = ",".join(sorted(a.name for a in coal))
+                lines.append(f"\nSupport: {{{names}}} -> {asm.name}")
+            for coal in self.attacks.get(asm, []):
+                names = ",".join(sorted(a.name for a in coal))
+                lines.append(f"\nAttack:  {{{names}}} -> {asm.name}")
+        return " ".join(lines)

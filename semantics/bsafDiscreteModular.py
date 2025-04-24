@@ -8,8 +8,9 @@ class DiscreteModular:
 
         # take values from BSAF
         self.arguments = BSAF.arguments
-        self.setAttacks = BSAF.setAttacks
-        self.setSupports = BSAF.setSupports
+        self.assumptions = BSAF.assumptions
+        self.setAttacks = BSAF.attacks
+        self.setSupports = BSAF.supports
 
         # self.arguments = [a,b,c]
         # self.setAttacks = {a: [[1,0,1],[0,1,1]], b: [0,1,1]], c: [[1,1,0]]}
@@ -19,10 +20,10 @@ class DiscreteModular:
         next_state = {}
 
         # aggregate the set-attacks and set-supports using set_aggregation
-        aggregated_setAttacks = {arg: [] for arg in self.arguments}
-        aggregated_setSupports = {arg: [] for arg in self.arguments}    
+        aggregated_setAttacks = {arg: [] for arg in self.assumptions}
+        aggregated_setSupports = {arg: [] for arg in self.assumptions}    
 
-        for argument in self.arguments:
+        for argument in self.assumptions:
             att_aggregation = []
             for attack in self.setAttacks[argument]:
                 set_aggregation = self.set_aggregation.aggregate_set(attack, state)
@@ -36,7 +37,7 @@ class DiscreteModular:
             aggregated_setSupports[argument] = sup_aggregation
 
         # compute the next state
-        for a in self.arguments:
+        for a in self.assumptions:
             aggregate_strength = self.aggregation.aggregate_strength(aggregated_setAttacks[a], aggregated_setSupports[a])
             result = self.influence.compute_strength(a.initial_weight, aggregate_strength)
 
@@ -63,18 +64,18 @@ class DiscreteModular:
         print("Set Aggregation: ", self.set_aggregation.name)
         print("-------\n")
 
-        state = {a: a.initial_weight for a in self.arguments}
-        print("iter\t"+"\t ".join([f"{arg.name}" for arg in self.arguments]))
+        state = {a: a.initial_weight for a in self.assumptions}
+        print("iter\t"+"\t ".join(sorted([f"{arg.name}" for arg in self.assumptions])))
 
         count = 0
-        print(str(count)+"\t"+"\t ".join([f"{state[arg]}" for arg in self.arguments]))
+        print(str(count) + "\t" + "\t ".join([f"{round(state[arg], 3)}" for arg in sorted(self.assumptions, key=lambda arg: arg.name)]))
 
         while iterations > 0:
             count +=1
             
             state = self.iterate(state)
             # print only 3 decimal places
-            print(str(count)+"\t"+"\t ".join([f"{round(state[arg],3)}" for arg in self.arguments]))
+            print(str(count) + "\t" + "\t ".join([f"{round(state[arg], 3)}" for arg in sorted(self.assumptions, key=lambda arg: arg.name)]))
             iterations -= 1
 
         return state

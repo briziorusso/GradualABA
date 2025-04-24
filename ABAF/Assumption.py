@@ -7,20 +7,32 @@ from constants import DEFAULT_WEIGHT
 
 
 class Assumption(Sentence):
-    def __new__(cls, name, contrary=None, weight=DEFAULT_WEIGHT):
+    def __new__(cls, name, contrary=None, initial_weight=DEFAULT_WEIGHT):
         if name in Sentence._existing_sentences:
             raise ValueError(f"A sentence with the name '{name}' already exists.")
         instance = super(Assumption, cls).__new__(cls)
         return instance
 
-    def __init__(self, name, contrary=None, weight=DEFAULT_WEIGHT):
+    def __init__(self, name, contrary=None, initial_weight=DEFAULT_WEIGHT):
         if not hasattr(self, 'initialized'):  # Ensure __init__ is called only once
-            super().__init__(name, weight)
+            super().__init__(name, initial_weight)
             self.contrary = contrary
             self.initialized = True
 
     def __str__(self):
-        return f"Assumption({self.name}, contrary={self.contrary}, weight={self.weight})"
+        return f"Assumption({self.name}, contrary={self.contrary}, weight={self.initial_weight})"
 
     def __repr__(self):
         return self.__str__()
+    
+    def __contrary__(self):
+        return self.contrary
+    
+    def __eq__(self, other):
+        if not isinstance(other, Assumption):
+            return False
+        return self.name == other.name and self.contrary == other.contrary and self.initial_weight == other.initial_weight
+    
+    def __hash__(self):
+        return hash((self.name, self.contrary))
+    

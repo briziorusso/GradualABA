@@ -2,6 +2,7 @@ from .Rule import Rule
 from .Assumption import Assumption
 from .Sentence import Sentence
 from BSAF.Argument import Argument
+import itertools
 
 from BSAF.BSAF import BSAF
 from BAG.BAG import BAG
@@ -24,7 +25,7 @@ ASP_ENCODING = """
 class ABAF:
     def __init__(self, assumptions=None, rules=None, debug=False, arg_mode="basic"):
         """
-        Abstract Bipolar Argumentation Framework:
+        Assumption-based Argumentation Framework:
         - assumptions: iterable of Assumption instances
         - rules: list of Rule instances
         """
@@ -89,15 +90,17 @@ class ABAF:
         return sentences
 
     def on_model(self, m):
-        if self.debug:
+        if True:
             print(m)
             print(f"{self.current_atom} <- {m}")
+            print(f"{self.arg_counter}, {self.current_atom}")
         if True:
             self.derived_in[self.current_atom].add(self.arg_counter)
             self.derives[self.arg_counter] = {self.current_atom}
             self.support_of[self.arg_counter] = set()
             len_in = 0
             for asp_atom in m.symbols(shown=True):
+                print("asp_atom", asp_atom)
                 str_elem = str(asp_atom.arguments[0])
                 if str_elem in [asm.name for asm in self.assumptions]:
                     if asp_atom.name == "in":
@@ -109,11 +112,13 @@ class ABAF:
                             self.asmpt_derivable_from[str_elem].add(self.arg_counter)
                         except KeyError:
                             self.asmpt_derivable_from[str_elem] = {self.arg_counter}
+            print(self.support_of)
 
             if self.current_atom in [asm.name for asm in self.assumptions] and len_in == 1 and next(iter(self.support_of[self.arg_counter])) == self.current_atom:
                 self.asmpt_to_singleton[self.current_atom] = self.arg_counter
             self.arg_counter += 1
-
+            
+   
     def on_model_all_derivations(self, m):
         self.last_model = m.symbols(shown=True)
         self.derives[self.arg_counter] = set()
@@ -288,6 +293,84 @@ class ABAF:
 
         self.arguments = arguments
         return arguments
+
+
+
+
+
+
+    def build_arguments_procedure(self,weight_agg):
+        """
+        Generate all arguments (assumption arguments and derived arguments), with claim and premises
+        Returns: 
+            - list of tuples of arguments (premises, claim), where premises is a list of assumptions, claim is an assumption
+        """
+        print("Building arguments procedurally..")
+        
+        st = time.time()
+        arguments = []
+
+
+        for i in range(len(self.assumptions)):
+            assumption_list = list(self.assumptions)
+            arg = ([assumption_list[i]],assumption_list[i])
+            arguments.append(arg)
+
+        
+        while True:
+            new_args = 0
+
+            for rule in self.rules:
+                claim = rule.head
+
+                all_arg_for_all_body_els = [[arg for arg in arguments if arg[1].name == sentence.name] for sentence in rule.body]
+                if any(not candidate_for_body_el for candidate_for_body_el in all_arg_for_all_body_els):
+                    break
+                all_top_subarguments = list(itertools.product(*all_arg_for_all_body_els))
+
+                for top_subargs in all_top_subarguments:
+                    tmp_supporting_assumptions = [x for xs in [item[0] for item in top_subargs] for x in xs]
+                    supporting_assumptions = list(set(tmp_supporting_assumptions))
+                    supporting_assumptions.sort(key=lambda x: x.name)
+
+                    arg = (supporting_assumptions,claim)
+                    if arg not in arguments:
+                        arguments.append(arg)
+                        new_args += 1
+            
+            if not new_args:
+                break
+        
+        print("Arguments:")
+        for arg in arguments:
+            print([asm.name for asm in arg[0]], arg[1].name)
+
+
+        argument_instances = []
+        for arg in arguments:
+            claim = arg[1]
+            body_names = [asm.name for asm in arg[0]]
+            asm_objs = [next(a for a in self.assumptions if a.name == s) for s in body_names]
+            support_weights = {asm.name: asm.initial_weight for asm in asm_objs}
+            init_w = weight_agg.aggregate_set(weight_agg, state=support_weights, set=set(body_names))
+            weighted_arg = Argument(initial_weight=init_w, head=claim, body=asm_objs)
+            argument_instances.append(weighted_arg)
+
+        print("Arguments instances:")
+        for arg in argument_instances:
+            print(arg.name, arg.head, [asm.name for asm in arg.body], "initial_weight", arg.initial_weight)
+
+        print(f"{time.time()-st:.2f} seconds for argument construction - {len(arguments)} arguments")
+
+        self.arguments = argument_instances
+        return argument_instances
+
+
+
+
+
+
+
 
     def _build_bag(self, weight_agg):
         """

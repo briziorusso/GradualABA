@@ -58,14 +58,14 @@ a.contrary = 'f'
 # c.contrary = 'f'
 
 ## Rules
-r1 = Rule(head=b, body=[e,c], name="r1")
-r2 = Rule(head=f, body=[c], name="r2")
-r3 = Rule(head=e, body=[d], name="r3")
-# att1 = Rule(head=d, body=[a], name="att1")
+r1 = Rule(head=f, body=[e,g], name="r1")
+r2 = Rule(head=e, body=[c], name="r2")
+r3 = Rule(head=e, body=[d,a], name="r3")
+r5 = Rule(head=e, body=[a], name="r5")
 # att2 = Rule(head=a, body=[f], name="att2")
-att3 = Rule(head=f, body=[b,c], name="att3")
+r4 = Rule(head=g, body=[b,a], name="r4")
 
-abaf = ABAF(assumptions=[a,b,c,d], rules=[r1,r2,r3,att3])
+abaf = ABAF(assumptions=[a,b,c,d], rules=[r4,r2,r1,r3,r5])
 
 print(abaf)
 
@@ -82,3 +82,6 @@ model.solve(10)
 bag = abaf.to_bag(weight_agg=SetProductAggregation)
 
 print(bag) ### TODO: this has more supports than the example
+
+abaf.build_arguments_procedure(weight_agg=SetProductAggregation)
+

@@ -38,6 +38,7 @@ class Argument:
         inst.name = name
         return inst
 
+    # TODO: change "head" to "claim" and "body" to "premises" ---- arguments != rules !!! this is getting so very much confusing. 
     def __init__(self, name=None, initial_weight=DEFAULT_WEIGHT, strength=None, head=None, body=None):
         # Only initialize once
         if hasattr(self, '_initialized'):
@@ -82,13 +83,15 @@ class Argument:
         self.supporters[supporter] = weight
 
     def __repr__(self):
-        attackers_names = ', '.join(a.name for a in self.attackers)
-        supporters_names = ', '.join(s.name for s in self.supporters)
-        return (
-            f"Argument(name={self.name}, initial_weight={self.initial_weight}, "
-            f"strength={self.strength}, attackers={{{attackers_names}}}, "
-            f"supporters={{{supporters_names}}})"
-        )
+        body = ', '.join(a.name for a in self.body)
+        return f"({[body]},{self.head})"
+    #     attackers_names = ', '.join(a.name for a in self.attackers)
+    #     supporters_names = ', '.join(s.name for s in self.supporters)
+    #     return (
+    #         f"Argument(name={self.name}, initial_weight={self.initial_weight}, "
+    #         f"strength={self.strength}, attackers={{{attackers_names}}}, "
+    #         f"supporters={{{supporters_names}}})"
+    #     )
 
     def __str__(self):
         body = ', '.join(a.name for a in self.body)

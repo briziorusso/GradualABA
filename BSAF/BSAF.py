@@ -32,7 +32,7 @@ class BSAF:
                 continue
             claim = arg.head
             # SUPPORT: argument's claim matches assumption name
-            target = next((a for a in self.assumptions if a.name == claim), None)
+            target = next((a for a in self.assumptions if a == claim), None)
             if target:
                 self.supports[target].add(coalition)
                 continue

@@ -378,7 +378,7 @@ class ABAF:
           - support: if arg1.head matches any element in arg2.body ⇒ Support(arg1→arg2)
           - attack: if arg1.head equals contrary of any element in arg2.body ⇒ Attack(arg1→arg2)
         """
-        args = self._build_arguments(weight_agg) if not self.arguments else self.arguments
+        args = self.build_arguments_procedure(weight_agg) if not self.arguments else self.arguments
         bag = BAG()
         # register arguments
         for arg in args:
@@ -402,7 +402,7 @@ class ABAF:
                     bag.add_attack(a1, a2)
                     if self.debug:
                         print(f"Attack: {a1.name} -> {a2.name} ({a1.head} = contrary of {a2.body})")
-                elif any(hasattr(a1.head, 'contrary') and a1.contrary == premise for premise in a2.body):
+                elif any(hasattr(a1.head, 'contrary') and a1.head.contrary == premise for premise in a2.body):
                     bag.add_attack(a1, a2)
                     if self.debug:
                         print(f"Attack: {a1.name} -> {a2.name} ({a1.contrary} in {a2.body})")
@@ -412,7 +412,7 @@ class ABAF:
         return self._build_bag(weight_agg)
 
     def to_bsaf(self, weight_agg=SPA.SetProductAggregation):
-        args = self._build_arguments(weight_agg) if not self.arguments else self.arguments
+        args = self.build_arguments_procedure(weight_agg) if not self.arguments else self.arguments
         bsaf = BSAF(arguments=args, assumptions=self.assumptions)
         return bsaf
 

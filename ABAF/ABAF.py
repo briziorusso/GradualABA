@@ -325,7 +325,7 @@ class ABAF:
 
                 all_arg_for_all_body_els = [[arg for arg in arguments if arg[1].name == sentence.name] for sentence in rule.body]
                 if any(not candidate_for_body_el for candidate_for_body_el in all_arg_for_all_body_els):
-                    break
+                    pass
                 all_top_subarguments = list(itertools.product(*all_arg_for_all_body_els))
 
                 for top_subargs in all_top_subarguments:

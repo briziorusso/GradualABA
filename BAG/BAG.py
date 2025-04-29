@@ -1,7 +1,7 @@
 import os
 import re
 import string
-from BSAF.Argument import Argument
+from BAG.Argument import Argument
 from .Support import Support
 from .Attack import Attack
 

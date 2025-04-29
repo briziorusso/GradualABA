@@ -10,9 +10,12 @@ def strengthplot(model, delta, epsilon, title="Untitled graph"):
         raise TypeError("epsilon must be a float or integer")
 
     fig, ax = plt.subplots()
-    for x in model.approximator.graph_data:
-        x_values = [x[0] for x in model.approximator.graph_data[x]]
-        y_values = [y[1] for y in model.approximator.graph_data[x]]
+    graph_data = model.approximator.graph_data if hasattr(model, 'approximator') else model.graph_data
+    if not graph_data:
+        raise ValueError("No graph data found in the model. Please run the model first.")
+    for x in graph_data:
+        x_values = [x[0] for x in graph_data[x]]
+        y_values = [y[1] for y in graph_data[x]]
         ax.plot(x_values, y_values, label=x)
 
     ax.set_xlabel('Time (t)')  # Add an x-label to the axes.

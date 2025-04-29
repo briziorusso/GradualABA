@@ -72,7 +72,9 @@ class DiscreteModular:
 
         while iterations > 0:
             count +=1
-            
+            if generate_plot:
+                for asm in self.assumptions:
+                    self.graph_data[asm.name].append((count, state[asm]))
             state = self.iterate(state)
             # print only 3 decimal places
             print(str(count) + "\t" + "\t ".join([f"{round(state[arg], 3)}" for arg in sorted(self.assumptions, key=lambda arg: arg.name)]))

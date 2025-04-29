@@ -5,7 +5,7 @@ class SetProductAggregation:
     def aggregate_set(self, set, state):
         result = 1
         for a in set:
-            result *= 1-state[a]
+            result *= state[a]
 
         return result
 

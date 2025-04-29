@@ -1,0 +1,38 @@
+arg(s1, 0.5)
+arg(s2, 0.5)
+arg(s3, 0.5)
+arg(s4, 0.5)
+arg(y58, 0.0)
+arg(y62, 0.0)
+arg(pb, 0.0)
+arg(pl, 0.0)
+
+att(y58, y62)
+att(y62, y58)
+
+att(pb, pl)
+att(pl, pb)
+
+sup(s1,y58)
+sup(y58,s1)
+
+sup(s1,pl)
+sup(pl,s1)
+
+sup(s2,y58)
+sup(y58,s2)
+
+sup(s2,pl)
+sup(pl,s2)
+
+sup(s3,y58)
+sup(y58,s3)
+
+sup(s3,pb)
+sup(pb,s3)
+
+sup(s4,y62)
+sup(y62,s4)
+
+sup(s4,pl)
+sup(pl,s4)

@@ -1,5 +1,6 @@
 class LinearInfluence:
     def __init__(self, conservativeness) -> None:
+        self.name = "LinearInfluence"
         self.conservativeness = conservativeness
 
     def compute_strength(self, weight, aggregate):

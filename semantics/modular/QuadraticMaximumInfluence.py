@@ -1,5 +1,6 @@
 class QuadraticMaximumInfluence:
     def __init__(self, conservativeness) -> None:
+        self.name = "QuadraticMaximumInfluence"
         self.conservativeness = conservativeness
 
     def compute_strength(self, weight, aggregate):

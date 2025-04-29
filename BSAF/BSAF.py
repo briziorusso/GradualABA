@@ -37,8 +37,8 @@ class BSAF:
                 self.supports[target].add(coalition)
                 continue
             # ATTACK: argument's claim matches assumption.contrary
-            attacked = next((a for a in self.assumptions if a.contrary == claim), None)
-            if attacked:
+            attacked = next((a for a in self.assumptions if a.contrary == claim.name), None)
+            if attacked and claim is not None:
                 self.attacks[attacked].add(coalition)
 
     def add_attack(self, attackers, attacked):
@@ -48,13 +48,15 @@ class BSAF:
         Records that attackers attack the attacked argument.
         Only attackers that are in the assumptions. 
         """
-        if attacked not in self.attacks:
+        if attacked not in self.arguments:
             raise ValueError("attacked argument not in framework")
         # Filter valid assumption-based attackers
-        valid = frozenset(a for a in attackers if hasattr(a, 'name') and a in self.assumptions)
+        valid = frozenset(asm for asm in self.assumptions if asm.name in [a.name for a in attackers])
         if not valid:
             return
-        self.attacks[attacked].add(valid)
+        attacked_asm = next((asm for asm in self.assumptions if asm.name == attacked.name), None)
+
+        self.attacks[attacked_asm].add(valid)
 
     def add_support(self, supporters, supported):
         """
@@ -63,12 +65,13 @@ class BSAF:
         Records that supporters support the supported argument.
         Only supporters that are in the assumptions.
         """
-        if supported not in self.supports:
+        if supported not in self.arguments:
             raise ValueError("supported argument not in framework")
-        valid = frozenset(s for s in supporters if hasattr(s, 'name') and s in self.assumptions)
+        valid = frozenset(asm for asm in self.assumptions if asm.name in [a.name for a in supporters])
         if not valid:
             return
-        self.supports[supported].add(valid)
+        supported_asm = next((asm for asm in self.assumptions if asm.name == supported.name), None)
+        self.supports[supported_asm].add(valid)
 
     def __repr__(self):
         asum = sorted(a.name for a in self.assumptions)

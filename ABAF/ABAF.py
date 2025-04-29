@@ -287,7 +287,7 @@ class ABAF:
             arg = Argument(name=f"arg{i}", initial_weight=init_w, head=next(iter(head)), body=asm_objs)
             arguments.append(arg)
             if self.debug:
-                print(f"Argument {i}: {arg.name} ({arg.head}) <- {arg.body} ({len(arg.body)})")
+                print(f"Argument {i}: {arg.name} ({arg.claim}) <- {arg.premise} ({len(arg.premise)})")
 
         print(f"{time.time()-st:.2f} seconds for argument construction - {self.arg_counter} arguments")
 
@@ -353,23 +353,17 @@ class ABAF:
             asm_objs = [next(a for a in self.assumptions if a.name == s) for s in body_names]
             support_weights = {asm.name: asm.initial_weight for asm in asm_objs}
             init_w = weight_agg.aggregate_set(weight_agg, state=support_weights, set=set(body_names))
-            weighted_arg = Argument(initial_weight=init_w, head=claim, body=asm_objs)
+            weighted_arg = Argument(initial_weight=init_w, claim=claim, premise=asm_objs)
             argument_instances.append(weighted_arg)
 
         print("Arguments instances:")
         for arg in argument_instances:
-            print(arg.name, arg.head, [asm.name for asm in arg.body], "initial_weight", arg.initial_weight)
+            print(arg.name, arg.claim, [asm.name for asm in arg.premise], "initial_weight", arg.initial_weight)
 
         print(f"{time.time()-st:.2f} seconds for argument construction - {len(arguments)} arguments")
 
         self.arguments = argument_instances
         return argument_instances
-
-
-
-
-
-
 
 
     def _build_bag(self, weight_agg):
@@ -383,8 +377,8 @@ class ABAF:
         # register arguments
         for arg in args:
             bag.arguments[arg.name] = arg
-            bodylist = ",".join(premise.name for premise in arg.body)
-            print(f"{arg.name}: ([{bodylist}],{arg.head})")
+            bodylist = ",".join(premise.name for premise in arg.premise)
+            print(f"{arg.name}: ([{bodylist}],{arg.claim})")
         print("Creting BAF: Extracting relations between arguments...")
         # build supports and attacks between arguments
         for a1 in args:

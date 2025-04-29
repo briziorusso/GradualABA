@@ -77,7 +77,7 @@ class TestBSAF(unittest.TestCase):
                 if len(supporters) > 1:
                     nonemptysupports.add((supporters, supported))
         for arg in bsaf.arguments:
-            arglist.add((frozenset(a.name for a in arg.body), arg.head.name))
+            arglist.add((frozenset(a.name for a in arg.premise), arg.claim.name))
             
         expected_attacks = set([
             (frozenset(['b', 'c']), 'a'),
@@ -147,7 +147,7 @@ class TestBSAF(unittest.TestCase):
                 if len(supporters) > 1:
                     nonemptysupports.add((supporters, supported))
         for arg in bsaf.arguments:
-            arglist.add((frozenset(a.name for a in arg.body), arg.head.name))
+            arglist.add((frozenset(a.name for a in arg.premise), arg.claim.name))
 
         
         expected_attacks = set([

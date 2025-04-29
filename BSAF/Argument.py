@@ -11,12 +11,12 @@ class Argument:
       - Unique instance names (auto-generated or user-provided)
       - Initial weight, dynamic strength
       - Management of attackers and supporters with weights
-      - Optional head (claim) and body (supporting assumptions) attributes
+      - Optional claim (claim) and premise (supporting assumptions) attributes
     """
     _counter = 0
     _instances = {}
 
-    def __new__(cls, name=None, initial_weight=DEFAULT_WEIGHT, strength=None, head=None, body=None):
+    def __new__(cls, name=None, initial_weight=DEFAULT_WEIGHT, strength=None, claim=None, premise=[]):
         # Generate unique name if not provided
         if name is None:
             name = f"x{cls._counter + 1}"
@@ -25,8 +25,8 @@ class Argument:
         if name in cls._instances:
             # raise ValueError(f"An Argument with the name '{name}' already exists.")
             ## Check that they are actually the same
-            if cls._instances[name].head != head or cls._instances[name].body != body:
-                # print(f"Instance with name '{name}' has different head or body. Generating new name.")
+            if cls._instances[name].claim is not claim or cls._instances[name].premise != premise:
+                # print(f"Instance with name '{name}' has different claim or premise. Generating new name.")
                 name = f"x{cls._counter + 1}"
                 cls._counter += 1
             else:
@@ -35,11 +35,11 @@ class Argument:
         # Create instance and store
         inst = super().__new__(cls)
         cls._instances[name] = inst
+        cls._counter += 1
         inst.name = name
         return inst
 
-    # TODO: change "head" to "claim" and "body" to "premises" ---- arguments != rules !!! this is getting so very much confusing. 
-    def __init__(self, name=None, initial_weight=DEFAULT_WEIGHT, strength=None, head=None, body=None):
+    def __init__(self, name=None, initial_weight=DEFAULT_WEIGHT, strength=None, premise=None, claim=None):
         # Only initialize once
         if hasattr(self, '_initialized'):
             return
@@ -48,10 +48,10 @@ class Argument:
             raise TypeError("initial_weight must be an int or float")
         self.initial_weight = initial_weight
         self.strength = strength if strength is not None else initial_weight
-        # Optional head (Sentence or string representing the conclusion)
-        self.head = head
-        # Optional body: list of Sentence or Assumption instances supporting this argument
-        self.body = list(body) if body is not None else []
+        # Optional claim (Sentence or string representing the conclusion)
+        self.claim = claim
+        # Optional premise: list of Sentence or Assumption instances supporting this argument
+        self.premise = list(premise) if premise is not None else []
         # Relationship maps: Argument -> numeric weight
         self.attackers = {}
         self.supporters = {}
@@ -83,8 +83,8 @@ class Argument:
         self.supporters[supporter] = weight
 
     def __repr__(self):
-        body = ', '.join(a.name for a in self.body)
-        return f"({[body]},{self.head})"
+        premise = ', '.join(a.name for a in self.premise)
+        return f"({[premise]},{self.claim})"
     #     attackers_names = ', '.join(a.name for a in self.attackers)
     #     supporters_names = ', '.join(s.name for s in self.supporters)
     #     return (
@@ -94,15 +94,22 @@ class Argument:
     #     )
 
     def __str__(self):
-        body = ', '.join(a.name for a in self.body)
-        # return f"{self.head} <- [{body}]"
-        return f"({[body]},{self.head})"
+        premise = ', '.join(a.name for a in self.premise)
+        # return f"{self.claim} <- [{premise}]"
+        return f"({[premise]},{self.claim})"
     
     def __hash__(self):
-        return hash((self.head, frozenset(self.body)))
+        return hash((self.claim, frozenset(self.premise)))
     
     def __eq__(self, other):
         if not isinstance(other, Argument):
             return False
-        return self.head == other.head and self.body == other.body and self.name == other.name
+        return self.claim == other.claim and self.premise == other.premise and self.name == other.name
+    
+    def __reset__(self):
+        self.strength = self.initial_weight
+        self.attackers.clear()
+        self.supporters.clear()
+        self.premise.clear()
+        self.claim = None
     

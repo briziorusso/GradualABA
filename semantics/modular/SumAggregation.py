@@ -1,16 +1,15 @@
 class SumAggregation:
     def __init__(self) -> None:
+        self.name = "SumAggregation"
         pass
 
-    def aggregate_strength(self, attackers, supporters, state):
+    def aggregate_strength(self, attackers, supporters):
         aggregate = 0
-        for a in attackers:
-            attack_weight = attackers[a]
-            aggregate -= state[a] * attack_weight
+        for a in attackers:  
+                aggregate -= a
 
         for s in supporters:
-            support_weight = supporters[s]
-            aggregate += state[s] * support_weight
+                aggregate += s
 
         return aggregate
     

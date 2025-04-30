@@ -36,3 +36,8 @@ class Assumption(Sentence):
     def __hash__(self):
         return hash((self.name, self.contrary))
     
+    @classmethod
+    def reset_identifiers(cls):
+        """Reset the used identifiers (for testing or reloading purposes)."""
+        cls._existing_sentences.clear()
+    

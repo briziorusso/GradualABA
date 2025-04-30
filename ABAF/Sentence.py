@@ -52,3 +52,8 @@ class Sentence:
         if not isinstance(new_weight, (int, float)):
             raise TypeError("new_weight must be of type integer or float")
         self.initial_weight = new_weight
+
+    @classmethod
+    def reset_identifiers(cls):
+        """Reset the used identifiers (for testing or reloading purposes)."""
+        cls._existing_sentences.clear()

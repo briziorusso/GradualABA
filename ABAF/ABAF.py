@@ -2,14 +2,13 @@ from .Rule import Rule
 from .Assumption import Assumption
 from .Sentence import Sentence
 from BSAF.Argument import Argument
-import itertools
-
 from BSAF.BSAF import BSAF
 from BAG.BAG import BAG
 
 from constants import DEFAULT_WEIGHT
 from semantics.modular import SetProductAggregation as SPA, SetSumAggregation as SSA
 
+import itertools
 import clingo
 import os, time
 # ASP encoding for argument generation
@@ -23,15 +22,15 @@ ASP_ENCODING = """
     """
 
 class ABAF:
-    def __init__(self, assumptions=None, rules=None, debug=False, arg_mode="basic"):
+    def __init__(self, sentences=None, assumptions=None, rules=None, debug=False, arg_mode="basic", path=None):
         """
         Assumption-based Argumentation Framework:
         - assumptions: iterable of Assumption instances
         - rules: list of Rule instances
         """
-        if assumptions is None:
-            raise ValueError("assumptions parameter is required")
-        self.assumptions = set(assumptions)
+
+        self.assumptions = set(assumptions) if assumptions else set()
+        self.sentences = set(sentences) if sentences else set()
         self.rules = rules or []
         self.debug = debug
         self.arguments = []
@@ -47,6 +46,112 @@ class ABAF:
         self.last_model = None
         self.asmpt_to_singleton = dict()     # includes _the_ argument for singleton assumption set
         self.singleton_asp_atom = clingo.Function("singleton")
+
+        if path:
+            self._load_from_file(path)
+
+        if not self.assumptions:
+            raise ValueError("No assumptions provided. At least one assumption is required.")
+
+    def _load_from_file(self, path):
+        with open(path, "r") as f:
+            text = f.read().split("\n")
+        self.arguments.clear()
+        self.sentences.clear()
+        self.rules.clear()
+        Rule.reset_identifiers()
+        Sentence.reset_identifiers()
+        Assumption.reset_identifiers()
+
+        assumptions = set()
+        sentences = set()
+        contraries = dict()
+        rules = []
+
+        for line in text:
+            if line.startswith("a "):
+                assumptions.add(str(line.split()[1]))
+            if line.startswith("c "):
+                components = line.split()
+                contraries[str(components[1])] = [components[2]]
+
+        # only one contrary!
+        rules_deriving = {ctr_list[0] : [] for ctr_list in contraries.values() if ctr_list[0] not in assumptions}
+        # Assumptions have empty set, used for SCC detection
+        for asmpt in assumptions:
+            rules_deriving[asmpt] = list()
+        #rules deriving now contains all the contrary values and all the assumptions
+
+        sentences.update(assumptions) ## TODO: needed?
+        for ctr_list in contraries.values():
+            sentences.add(ctr_list[0])
+
+        rule_indices = []
+        heads = dict()
+        bodies = dict()
+        rule_index = 1
+        for line in text:
+            if line.startswith("r "):
+                components = line.split()[1:]
+                head, body = str(components[0]), components[1:]
+                rule_indices.append(str(rule_index))
+                heads[str(rule_index)] = head
+                if head in rules_deriving:
+                    rules_deriving[head].append(str(rule_index))
+                else:
+                    rules_deriving[head] = [str(rule_index)]
+
+                bodies[str(rule_index)] = {str(b) for b in body}
+                sentences.add(head)
+                sentences.update(set(body))
+                for b in body:
+                    if not b in assumptions and not b in rules_deriving:
+                        rules_deriving[b] = []
+
+                rule_index += 1
+
+        # create assumptions
+        self.assumptions = set()
+        for asmpt in assumptions:
+            if asmpt in contraries:
+                c = contraries[asmpt][0]
+                assumption = Assumption(asmpt, contrary=c, initial_weight=DEFAULT_WEIGHT)
+            else:
+                assumption = Assumption(asmpt)
+            self.assumptions.add(assumption)
+            self.sentences.add(assumption)
+        for sent in sentences:
+            sent = Sentence(sent, initial_weight=DEFAULT_WEIGHT)
+            self.sentences.add(sent)
+
+        # create rules
+        for rule_index in rule_indices:
+            head = heads[rule_index]
+            body = bodies[rule_index]
+            ## check if head and body are in sentences and assumptions
+            if head in [asmpt.name for asmpt in self.assumptions]:
+                head_sent = next(a for a in self.assumptions if a.name == head)
+            elif head in [s.name for s in self.sentences]:
+                head_sent = next(s for s in self.sentences if s.name == head)
+            else:
+                head_sent = Sentence(head, initial_weight=DEFAULT_WEIGHT)
+                self.sentences.add(head_sent)
+
+            if body:
+                body_sent = []
+                for b in body:
+                    if b in [asmpt.name for asmpt in self.assumptions]:
+                        body_sent.append(next(a for a in self.assumptions if a.name == b))
+                    elif b in [s.name for s in self.sentences]:
+                        body_sent.append(next(s for s in self.sentences if s.name == b))
+                    else:
+                        body_sent.append(Sentence(b, initial_weight=DEFAULT_WEIGHT))
+                        self.sentences.add(body_sent[-1])
+            else:
+                body_sent = []
+
+            rule = Rule(head=head_sent, body=body_sent, name=f"r{rule_index}")
+            rules.append(rule)
 
     def add_assumption(self, assumption: Assumption):
         if not isinstance(assumption, Assumption):

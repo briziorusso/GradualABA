@@ -180,8 +180,124 @@ class TestBSAF(unittest.TestCase):
         self.assertEqual(arglist, expected_arguments, f"Expected arguments: {expected_arguments}, but got: {arglist}")
 
         print("Arguments, attacks and supports extracted correctly.")
+
+class TestABAF(unittest.TestCase):
+
+    def test_abaf_from_iccma_file(self):
+        """Load an ICCMA file and convert it to ABAF format.
+        # Example. The ABA framework with rules 
+        # p :- q,a.
+        # q :- .
+        # r :- b,c. 
+        # assumptions a,b,c
+        # contraries a̅ = r, b̅ = s, c̅ = t 
+        # is specified as follows, with atom-indexing a=1, b=2, c=3, p=4, q=5, r=6, s=7, t=8.
+
+        p aba 8
+        a 1
+        a 2
+        a 3
+        c 1 6
+        c 2 7
+        c 3 8
+        r 4 5 1
+        r 5
+        r 6 2 3        
+        """
+        
+        iccma_file = "examples/ABA_ICCMA_input.iccma"
+        # Assuming the file contains valid ICCMA format
+        abaf = ABAF(path=iccma_file)
+        # Check if the assumptions and rules are parsed correctly
+
+        expected_assumptions = {'1', '2', '3'}
+        expected_contraries = {'1': '6', '2': '7', '3': '8'}
+        expected_rules = {
+            '4': {'5', '1'},
+            '5': set(),
+            '6': {'2', '3'}
+        }
+        ## format assumtions and rules
+        actual_assumptions = {assumption.name for assumption in abaf.assumptions}
+        actual_contraries = {assumption.name: assumption.contrary for assumption in abaf.assumptions}
+        actual_rules = {rule.head.name: set(rule.body) for rule in abaf.rules}
+
+        # Check assumptions
+        self.assertEqual(actual_assumptions, expected_assumptions, f"Expected assumptions: {expected_assumptions}, but got: {set(abaf.assumptions)}")
+        # Check contraries
+        for assumption in abaf.assumptions:
+            self.assertEqual(actual_contraries[assumption.name], expected_contraries[assumption.name], f"Expected contrary for {assumption.name}: {expected_contraries[assumption.name]}, but got: {assumption.contrary}")
+        # Check rules
+        for rule in abaf.rules:
+            self.assertEqual(actual_rules[rule.head.name], expected_rules[rule.head.name], f"Expected rule for {rule.head.name}: {expected_rules[rule.head.name]}, but got: {abaf.rules[rule.head.name]}")
+        print("ABAF loaded from ICCMA file correctly.")
+
+
+    def test_abaf_from_iccma_file2(self):
+
+        """Load an ICCMA file and convert it to ABAF format.
+            p aba 6
+
+            a 1
+            a 2
+            a 3
+            a 4
+            a  5
+            c 1 2
+            c 2 1
+            c 3 4
+            c 4 3
+            c 4 2
+
+            c 2 4
+            c 3 4
+            c 5  1
+            c  1 5
+
+            r 6 2    3  5
+            r 6 4
+        """
+        
+        iccma_file = "examples/ex2.iccma"
+        # Assuming the file contains valid ICCMA format
+        abaf = ABAF(path=iccma_file)
+        # Check if the assumptions and rules are parsed correctly
+
+        expected_assumptions = {'1', '2', '3', '4', '5'}
+        expected_contraries = {
+            '1': '2',
+            '2': '1',
+            '3': '4',
+            '4': '3',
+            '4': '2',
+            '2': '4',
+            '3': '4',
+            '5': '1',
+            '1': '5'
+        }
+        expected_rules = {
+            '6': {'2', '3', '5'},
+            '4': set()
+        }
+        ## format assumtions and rules
+        actual_assumptions = {assumption.name for assumption in abaf.assumptions}
+        actual_contraries = {assumption.name: assumption.contrary for assumption in abaf.assumptions}
+        actual_rules = {rule.head.name: set(rule.body) for rule in abaf.rules}
+        # Check assumptions
+        self.assertEqual(actual_assumptions, expected_assumptions, f"Expected assumptions: {expected_assumptions}, but got: {set(abaf.assumptions)}")
+        # Check contraries
+        for assumption in abaf.assumptions:
+            self.assertEqual(actual_contraries[assumption.name], expected_contraries[assumption.name], f"Expected contrary for {assumption.name}: {expected_contraries[assumption.name]}, but got: {assumption.contrary}")
+        # Check rules
+        for rule in abaf.rules:
+            self.assertEqual(actual_rules[rule.head.name], expected_rules[rule.head.name], f"Expected rule for {rule.head.name}: {expected_rules[rule.head.name]}, but got: {abaf.rules[rule.head.name]}")
+        print("ABAF loaded from ICCMA file correctly.")
         
         
 TestBSAF().test_aba_bsaf_1()
 TestBSAF().test_aba_bsaf_2()
+TestABAF().test_abaf_from_iccma_file()
+TestABAF().test_abaf_from_iccma_file2()
+
+print("All tests passed.")
 

@@ -54,6 +54,12 @@ class ABAF:
         if not self.assumptions:
             raise ValueError("No assumptions provided. At least one assumption is required.")
 
+        # --- Flatness check: no assumption may appear as the head of a rule ---
+        assump_names = {a.name for a in self.assumptions}
+        non_flat = [rule.head.name for rule in self.rules if rule.head.name in assump_names]
+        if non_flat:
+            self.non_flat = True
+
     def _load_from_file(self, path):
         with open(path, "r") as f:
             text = f.read().split("\n")

@@ -73,6 +73,7 @@ def worker_file(aba_path_str, params, runs, queue):
         num_assumptions = len(abaf.assumptions)
         num_rules       = len(abaf.rules)
         num_sentences = len(abaf.sentences)
+        non_flat = abaf.non_flat
 
         # 3) initial strengths
         initial_strengths = { a.name: a.initial_weight
@@ -88,6 +89,7 @@ def worker_file(aba_path_str, params, runs, queue):
                 "num_assumptions":   num_assumptions,
                 "num_rules":         num_rules,
                 "num_sentences":     num_sentences,
+                "non_flat":          non_flat,
 
                 "initial_strengths": initial_strengths,
                 "final_strengths":   None,
@@ -134,6 +136,7 @@ def worker_file(aba_path_str, params, runs, queue):
                 "num_assumptions":   locals().get("num_assumptions", None),
                 "num_rules":         locals().get("num_rules", None),
                 "num_sentences":     locals().get("num_sentences", None),
+                "non_flat":          locals().get("non_flat", None),
 
                 "initial_strengths": None,
                 "final_strengths":   None,

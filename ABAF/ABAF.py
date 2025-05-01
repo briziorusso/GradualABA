@@ -415,7 +415,7 @@ class ABAF:
         Generate all arguments (assumption arguments and derived arguments),
         returning a list of Argument instances.
         """
-        print("Building arguments procedurally…")
+        # print("Building arguments procedurally…")
         start = time.time()
 
         # 1) Build name→Assumption and name→Sentence mappings

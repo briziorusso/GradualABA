@@ -23,7 +23,7 @@ class BSAF:
         # Initialize empty relations
         self.supports = {asm: set() for asm in self.assumptions}
         self.attacks  = {asm: set() for asm in self.assumptions}
-        print("Creating BSAF: Extracting relations from arguments...")
+        # print("Creating BSAF: Extracting relations from arguments...")
         # Extract relations from arguments
         for arg in self.arguments:
             coalition = frozenset(arg.premise)

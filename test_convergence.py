@@ -2,6 +2,8 @@ import re
 import pickle
 from pathlib import Path
 from tqdm import tqdm
+from multiprocessing import Process, Queue
+
 import sys
 sys.path.append("../")
 
@@ -14,23 +16,23 @@ from semantics.modular.SumAggregation            import SumAggregation
 from semantics.modular.LinearInfluence           import LinearInfluence
 from semantics.modular.QuadraticMaximumInfluence import QuadraticMaximumInfluence
 
-INPUT_DIR   = Path("../dependency-graph-alternative/input_data_nf").resolve()
-OUTPUT_PKL  = "convergence_results.pkl"
-MAX_FILES   = 0 # 0 = all
-MAX_SENTENCES = 25
-MIN_SENTENCES = 0
+INPUT_DIR       = Path("../dependency-graph-alternative/input_data_nf").resolve()
+OUTPUT_PKL      = "convergence_results_test.pkl"
+MAX_FILES       = 0
+MAX_SENTENCES   = 25
+MIN_SENTENCES   = 0
+TIMEOUT_SECONDS = 10
 
-# 1) pick only .aba with sample-size "s≤MAX_SENTENCES"
+# pick only .aba with s between MIN and MAX
 pattern_s = re.compile(r"_s(\d+)_")
 all_aba = sorted(INPUT_DIR.glob("*.aba"))
 aba_paths = [p for p in all_aba
-             if (m := pattern_s.search(p.name)) and int(m.group(1)) <= MAX_SENTENCES and int(m.group(1)) >= MIN_SENTENCES]
-
-# limit number of files to process for testing
+             if (m := pattern_s.search(p.name))
+                and MIN_SENTENCES <= int(m.group(1)) <= MAX_SENTENCES]
 if MAX_FILES > 0:
     aba_paths = aba_paths[:MAX_FILES]
 
-# 2) regex to extract all parameters from filename
+# regex to extract s,c,n,a,r,b
 param_pat = re.compile(
     r"_s(?P<s>\d+)_"
     r"c(?P<c>[\d.]+)_"
@@ -40,79 +42,120 @@ param_pat = re.compile(
     r"b(?P<b>\d+)"
 )
 
-results = []
+def worker_run(aba_path_str, model_name, cfg, params, timeout, queue):
+    """
+    Runs one (file, model) end-to-end, writes `entry` dict into `queue`.
+    """
+    aba_path = Path(aba_path_str)
+    entry = {
+        "file": aba_path.name,
+        "file_path": str(aba_path),
+        "model": model_name,
+        **params,
+        "initial_strengths": None,
+        "final_strengths":   None,
+        "global_converged":  None,
+        "prop_converged":    None,
+        "per_arg":           None,
+        "timeout":           False
+    }
+    try:
+        # load and record initials
+        abaf = ABAF(path=str(aba_path))
+        bsaf = abaf.to_bsaf()
+        init_strengths = {a.name: a.initial_weight for a in bsaf.assumptions}
+        entry["initial_strengths"] = init_strengths
 
-for aba_path in tqdm(aba_paths, desc="Files", unit="file"):
-    # extract parameters
-    m = param_pat.search(aba_path.name)
-    if not m:
-        # skip or fill with None
-        params = dict(s=None, c=None, n=None, a=None, r=None, b=None)
-    else:
-        params = {
-            "s": int(m.group("s")),
-            "c": float(m.group("c")),
-            "n": float(m.group("n")),
-            "a": float(m.group("a")),
-            "r": int(m.group("r")),
-            "b": int(m.group("b")),
-        }
-
-    # load ABAF → BSAF
-    abaf = ABAF(path=str(aba_path))
-    bsaf = abaf.to_bsaf()
-
-    # record initial strengths once per file
-    initial_strengths = { asm.name: asm.initial_weight 
-                          for asm in bsaf.assumptions }
-
-    # two models to run
-    runs = [
-        ("DF-QuAD", {"aggregation": ProductAggregation(),
-                     "influence": LinearInfluence(conservativeness=1),
-                     "set_aggregation": SetProductAggregation()}),
-        ("QE",      {"aggregation": SumAggregation(),
-                     "influence": QuadraticMaximumInfluence(conservativeness=1),
-                     "set_aggregation": SetProductAggregation()})
-    ]
-
-    for model_name, cfg in runs:
-        # build & solve
+        # build model and solve
         model = DiscreteModular(
             BSAF=bsaf,
             aggregation=cfg["aggregation"],
             influence=cfg["influence"],
             set_aggregation=cfg["set_aggregation"]
         )
-        final_state = model.solve(20, generate_plot=True)
+        final_state = model.solve(20, generate_plot=True, verbose=False)
 
-        # map final strengths by name
-        final_strengths = { asm.name: final_state[asm] 
-                            for asm in model.assumptions }
-
-        # convergence checks
-        per_arg     = model.has_converged(epsilon=1e-3, last_n=5)
+        # record finals & convergence
+        final_strengths = {a.name: final_state[a] for a in model.assumptions}
+        per_arg = model.has_converged(epsilon=1e-3, last_n=5)
         global_conv = model.is_globally_converged(epsilon=1e-3, last_n=5)
-        total       = len(per_arg)
-        num_conv    = sum(per_arg.values())
-        prop_conv   = (num_conv / total) if total else 0.0
+        total = len(per_arg)
+        prop_conv = sum(per_arg.values()) / total if total else 0.0
 
-        # record everything
-        entry = {
-            "file":              aba_path.name,
-            "file_path":         str(aba_path),
-            "model":             model_name,
-            **params,  # s, c, n, a, r, b
-            "initial_strengths": initial_strengths,
-            "final_strengths":   final_strengths,
-            "global_converged":  global_conv,
-            "prop_converged":    prop_conv,
-            "per_arg":           per_arg
+        entry.update({
+            "final_strengths":  final_strengths,
+            "global_converged": global_conv,
+            "prop_converged":   prop_conv,
+            "per_arg":          per_arg
+        })
+    except Exception as e:
+        # if anything blows up (including timeout), mark it
+        entry["timeout"] = True
+
+    queue.put(entry)
+
+
+def run_with_timeout(aba_path, model_name, cfg, params, timeout):
+    q = Queue()
+    p = Process(
+        target=worker_run,
+        args=(str(aba_path), model_name, cfg, params, timeout, q)
+    )
+    p.start()
+    p.join(timeout)
+    if p.is_alive():
+        p.terminate()
+        p.join()
+        # give back a timeout-only entry
+        print(f"Timeout on {aba_path.name} ({model_name})")
+        return {
+            "file": aba_path.name,
+            "file_path": str(aba_path),
+            "model": model_name,
+            **params,
+            "initial_strengths": None,
+            "final_strengths":   None,
+            "global_converged":  None,
+            "prop_converged":    None,
+            "per_arg":           None,
+            "timeout":           True
         }
-        results.append(entry)
+    # otherwise grab result
+    return q.get()
 
-    # persist after each file
-    with open(OUTPUT_PKL, "wb") as pf:
-        pickle.dump(results, pf)
 
-print(f"Done! Results up to this point saved in {OUTPUT_PKL}")
+if __name__ == "__main__":
+    results = []
+
+    for aba_path in tqdm(aba_paths, desc="Files", unit="file"):
+        # parse params
+        m = param_pat.search(aba_path.name)
+        params = (
+            dict(s=int(m.group("s")), c=float(m.group("c")),
+                 n=float(m.group("n")), a=float(m.group("a")),
+                 r=int(m.group("r")), b=int(m.group("b")))
+            if m else dict(s=None, c=None, n=None, a=None, r=None, b=None)
+        )
+
+        runs = [
+            ("DF-QuAD", {
+                "aggregation":    ProductAggregation(),
+                "influence":      LinearInfluence(conservativeness=1),
+                "set_aggregation": SetProductAggregation()
+            }),
+            ("QE", {
+                "aggregation":    SumAggregation(),
+                "influence":      QuadraticMaximumInfluence(conservativeness=1),
+                "set_aggregation": SetProductAggregation()
+            })
+        ]
+
+        for model_name, cfg in runs:
+            entry = run_with_timeout(aba_path, model_name, cfg, params, TIMEOUT_SECONDS)
+            results.append(entry)
+
+        # save after each file
+        with open(OUTPUT_PKL, "wb") as pf:
+            pickle.dump(results, pf)
+
+    print(f"Complete — partial results in {OUTPUT_PKL}")

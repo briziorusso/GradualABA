@@ -8,6 +8,7 @@ from BAG.BAG import BAG
 from constants import DEFAULT_WEIGHT
 from semantics.modular.SetProductAggregation import SetProductAggregation 
 
+from collections import defaultdict
 import itertools
 import clingo
 import os, time
@@ -376,6 +377,8 @@ class ABAF:
             self.generate_arguments_naive(relevant_atoms, asmpt_redundancy)
         elif self.mode == "prune_supersets":
             self.generate_arguments_supersets_out(atoms)
+        else:
+            raise ValueError(f"Unknown mode: {self.mode}")
 
         for asm in assumptions:
             if asm in self.asmpt_to_singleton: continue
@@ -396,8 +399,8 @@ class ABAF:
             body_names = self.support_of[i]
             asm_objs = [next(a for a in self.assumptions if a.name == s) for s in body_names]
             support_weights = {asm.name: asm.initial_weight for asm in asm_objs}
-            init_w = weight_agg.aggregate_set(weight_agg, state=support_weights, set=set(body_names))
-            arg = Argument(name=f"arg{i}", initial_weight=init_w, head=next(iter(head)), body=asm_objs)
+            init_w = weight_agg.aggregate_set(state=support_weights, set=set(body_names))
+            arg = Argument(name=f"arg{i}", initial_weight=init_w, claim=next(iter(head)), premise=asm_objs)
             arguments.append(arg)
             if self.debug:
                 print(f"Argument {i}: {arg.name} ({arg.claim}) <- {arg.premise} ({len(arg.premise)})")
@@ -407,12 +410,96 @@ class ABAF:
         self.arguments = arguments
         return arguments
 
+    def build_arguments_procedure(self, weight_agg):
+        """
+        Generate all arguments (assumption arguments and derived arguments),
+        returning a list of Argument instances.
+        """
+        print("Building arguments procedurally…")
+        start = time.time()
 
+        # 1) Build name→Assumption and name→Sentence mappings
+        name2asm = {asm.name: asm for asm in self.assumptions}
 
+        # map *all* sentences (assumptions + any rule heads/bodies) to their objects
+        name2sent = dict(name2asm)  
+        for rule in self.rules:
+            # head
+            name2sent[rule.head.name] = rule.head
+            # body literals
+            for lit in rule.body:
+                name2sent[lit.name] = lit
 
+        # 2) Seed with single-assumption arguments
+        seen       = set()   # Set[ (tuple(sorted_premise_names), claim_name) ]
+        key_list   = []      # preserve insertion order
 
+        for asm in self.assumptions:
+            k = ((asm.name,), asm.name)
+            seen.add(k)
+            key_list.append(k)
 
-    def build_arguments_procedure(self,weight_agg):
+        # 3) Expand until fixpoint
+        while True:
+            new_keys = []
+
+            # index existing by claim for fast lookup
+            by_claim = defaultdict(list)
+            for prem_names, claim_name in key_list:
+                by_claim[claim_name].append(prem_names)
+
+            for rule in self.rules:
+                # skip if any body atom has no arguments yet
+                if any(lit.name not in by_claim for lit in rule.body):
+                    continue
+
+                # get lists of premise‐tuple choices for each body atom
+                pools = [by_claim[lit.name] for lit in rule.body]
+
+                # combine one sub‐arg per body atom
+                for combo in itertools.product(*pools):
+                    merged = tuple(sorted(set().union(*combo)))
+                    k = (merged, rule.head.name)
+                    if k not in seen:
+                        seen.add(k)
+                        new_keys.append(k)
+
+            if not new_keys:
+                break
+
+            key_list.extend(new_keys)
+
+        # 4) Now instantiate *once* per unique key
+        argument_instances = []
+        for prem_names, claim_name in key_list:
+            premise_objs = [name2sent[n] for n in prem_names]
+            # only assumptions carry initial_weight
+            state = {n: name2asm[n].initial_weight for n in prem_names}
+
+            init_w = weight_agg.aggregate_set(
+                state=state,
+                set=set(prem_names)
+            )
+
+            arg = Argument(
+                claim=name2sent[claim_name],
+                premise=premise_objs,
+                initial_weight=init_w
+            )
+            argument_instances.append(arg)
+
+        elapsed = time.time() - start
+        print(f"{elapsed:.2f}s to build {len(argument_instances)} arguments")
+
+        if self.debug:
+            for arg in argument_instances:
+                names = [p.name for p in arg.premise]
+                print(f"{arg.name}: {arg.claim.name} ← {names} (w={arg.initial_weight})")
+
+        self.arguments = argument_instances
+        return argument_instances
+
+    def build_arguments_procedure2(self,weight_agg):
         """
         Generate all arguments (assumption arguments and derived arguments), with claim and premises
         Returns: 

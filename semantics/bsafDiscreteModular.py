@@ -17,6 +17,43 @@ class DiscreteModular:
         # self.arguments = [a,b,c]
         # self.setAttacks = {a: [[1,0,1],[0,1,1]], b: [0,1,1]], c: [[1,1,0]]}
 
+    def has_converged(self, epsilon: float, last_n: int) -> dict:
+        """
+        Look at each assumption’s last `last_n` strength values (from graph_data)
+        and return a dict mapping assumption_name → bool indicating whether
+        for every consecutive pair in that window the change ≤ epsilon.
+
+        Requires that solve(..., generate_plot=True) has been called first.
+        """
+        if not isinstance(epsilon, (int, float)) or epsilon < 0:
+            raise ValueError("epsilon must be a non-negative number")
+        if not isinstance(last_n, int) or last_n < 2:
+            raise ValueError("last_n must be an integer ≥ 2")
+        if not self.graph_data:
+            raise RuntimeError("No graph_data found — run solve(..., generate_plot=True) first")
+
+        converged = {}
+        for name, seq in self.graph_data.items():
+            # need at least last_n points
+            if len(seq) < last_n:
+                converged[name] = False
+                continue
+
+            # grab just the last_n values
+            last_vals = [val for (_, val) in seq[-last_n:]]
+            # compute abs diffs between consecutive
+            diffs = [abs(last_vals[i] - last_vals[i-1]) for i in range(1, last_n)]
+            converged[name] = all(d <= epsilon for d in diffs)
+
+        return converged
+
+    def is_globally_converged(self, epsilon: float, last_n: int) -> bool:
+        """
+        True if *all* assumptions have converged over their last `last_n` steps.
+        """
+        conv_map = self.has_converged(epsilon, last_n)
+        return all(conv_map.values())
+
     def iterate(self, state):
 
         # computes the next state
@@ -85,9 +122,9 @@ class DiscreteModular:
             iterations -= 1
 
         return state
-
-    def __repr__(self, name) -> str:
-        return f"{name}({self.BAG}, {self.approximator}, {self.arguments}, {self.argument_strength}, {self.attacker}, {self.supporter})"
-
-    def __str__(self, name) -> str:
-        return f"{name} - BAG: {self.BAG}, Approximator: {self.approximator}, Arguments: {self.arguments}, Argument strength: {self.argument_strength}, Attacker: {self.attacker}, Supporter: {self.supporter})"
+    
+    def __repr__(self) -> str:
+        return f"DiscreteModular(BSAF={self.BSAF}, aggregation={self.aggregation}, influence={self.influence}, set_aggregation={self.set_aggregation})"
+    
+    def __str__(self) -> str:
+        return f"DiscreteModular - BSAF: {self.BSAF}, Aggregation: {self.aggregation}, Influence: {self.influence}, Set Aggregation: {self.set_aggregation})"

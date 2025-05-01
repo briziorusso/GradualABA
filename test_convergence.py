@@ -61,13 +61,6 @@ RUNS = [
 
 
 def worker_file(aba_path_str, params, runs, queue):
-    """
-    Load ABAF→BSAF once, then for each (model_name, cfg) in `runs`:
-      - build the DiscreteModular
-      - solve
-      - record strengths & convergence
-    Finally put the list of entries into `queue`.
-    """
     aba_path = Path(aba_path_str)
     entries = []
 
@@ -76,19 +69,26 @@ def worker_file(aba_path_str, params, runs, queue):
         abaf = ABAF(path=str(aba_path))
         bsaf = abaf.to_bsaf()
 
-        # 2) initial strengths
-        initial_strengths = {
-            a.name: a.initial_weight
-            for a in bsaf.assumptions
-        }
+        # 2) compute size‐stats
+        num_assumptions = len(abaf.assumptions)
+        num_rules       = len(abaf.rules)
+        num_sentences = len(abaf.sentences)
 
-        # 3) for each model configuration
+        # 3) initial strengths
+        initial_strengths = { a.name: a.initial_weight
+                              for a in bsaf.assumptions }
+
+        # 4) for each model configuration
         for model_name, cfg in runs:
             entry = {
                 "file":              aba_path.name,
                 "file_path":         str(aba_path),
                 "model":             model_name,
                 **params,
+                "num_assumptions":   num_assumptions,
+                "num_rules":         num_rules,
+                "num_sentences":     num_sentences,
+
                 "initial_strengths": initial_strengths,
                 "final_strengths":   None,
                 "global_converged":  None,
@@ -98,25 +98,20 @@ def worker_file(aba_path_str, params, runs, queue):
             }
 
             # build & solve
-            model = DiscreteModular(
-                BSAF=bsaf,
-                aggregation=cfg["aggregation"],
-                influence=cfg["influence"],
-                set_aggregation=cfg["set_aggregation"]
-            )
+            model       = DiscreteModular(
+                              BSAF=bsaf,
+                              aggregation=cfg["aggregation"],
+                              influence=cfg["influence"],
+                              set_aggregation=cfg["set_aggregation"]
+                          )
             final_state = model.solve(20, generate_plot=True, verbose=False)
 
-            # record final strengths
-            final_strengths = {
-                a.name: final_state[a]
-                for a in model.assumptions
-            }
-
-            # convergence
-            per_arg     = model.has_converged(epsilon=1e-3, last_n=5)
-            global_conv = model.is_globally_converged(epsilon=1e-3, last_n=5)
-            total       = len(per_arg)
-            prop_conv   = (sum(per_arg.values())/total) if total else 0.0
+            # record final strengths & convergence…
+            final_strengths = {a.name: final_state[a] for a in model.assumptions}
+            per_arg        = model.has_converged(epsilon=1e-3, last_n=5)
+            global_conv    = model.is_globally_converged(epsilon=1e-3, last_n=5)
+            total          = len(per_arg)
+            prop_conv      = (sum(per_arg.values())/total) if total else 0.0
 
             entry.update({
                 "final_strengths":  final_strengths,
@@ -128,14 +123,18 @@ def worker_file(aba_path_str, params, runs, queue):
             entries.append(entry)
 
     except Exception:
-        # If *any* step fails (including a model.solve timeout via the main process kill),
-        # mark *all* runs for this file as timed-out.
+        # if anything blows up, mark *both* runs for this file as timed‐out
         for model_name, _ in runs:
             entries.append({
-                "file":      aba_path.name,
-                "file_path": str(aba_path),
-                "model":     model_name,
+                "file":              aba_path.name,
+                "file_path":         str(aba_path),
+                "model":             model_name,
                 **params,
+                # still include whatever size‐stats we managed to compute (or None)
+                "num_assumptions":   locals().get("num_assumptions", None),
+                "num_rules":         locals().get("num_rules", None),
+                "num_sentences":     locals().get("num_sentences", None),
+
                 "initial_strengths": None,
                 "final_strengths":   None,
                 "global_converged":  None,
@@ -144,7 +143,7 @@ def worker_file(aba_path_str, params, runs, queue):
                 "timeout":           True
             })
 
-    # finally put list of two entries into queue
+    # push the two entries back to the main process
     queue.put(entries)
 
 

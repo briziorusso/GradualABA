@@ -73,7 +73,15 @@ class ABAF:
                 assumptions.add(str(line.split()[1]))
             if line.startswith("c "):
                 components = line.split()
-                contraries[str(components[1])] = [components[2]]
+                if contraries.get(str(components[1])) is not None:
+                    contraries[str(components[1])].append(components[2])
+                else:
+                    contraries[str(components[1])] = [components[2]]
+        ## check that each assumption has at most one contrary
+        for asmpt in assumptions:
+            if asmpt in contraries:
+                if len(set(contraries[asmpt])) > 1:
+                    raise ValueError(f"Assumption {asmpt} has more than one contrary: {set(contraries[asmpt])}")
 
         # only one contrary!
         rules_deriving = {ctr_list[0] : [] for ctr_list in contraries.values() if ctr_list[0] not in assumptions}

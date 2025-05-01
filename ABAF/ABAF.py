@@ -6,7 +6,7 @@ from BSAF.BSAF import BSAF
 from BAG.BAG import BAG
 
 from constants import DEFAULT_WEIGHT
-from semantics.modular import SetProductAggregation as SPA, SetSumAggregation as SSA
+from semantics.modular.SetProductAggregation import SetProductAggregation 
 
 import itertools
 import clingo
@@ -450,13 +450,13 @@ class ABAF:
                     if arg not in arguments:
                         arguments.append(arg)
                         new_args += 1
-            
             if not new_args:
                 break
         
-        print("Arguments:")
-        for arg in arguments:
-            print([asm.name for asm in arg[0]], arg[1].name)
+        if self.debug:
+            print("Arguments:")
+            for arg in arguments:
+                print([asm.name for asm in arg[0]], arg[1].name)
 
 
         argument_instances = []
@@ -465,13 +465,14 @@ class ABAF:
             body_names = [asm.name for asm in arg[0]]
             asm_objs = [next(a for a in self.assumptions if a.name == s) for s in body_names]
             support_weights = {asm.name: asm.initial_weight for asm in asm_objs}
-            init_w = weight_agg.aggregate_set(weight_agg, state=support_weights, set=set(body_names))
+            init_w = weight_agg.aggregate_set(state=support_weights, set=set(body_names))
             weighted_arg = Argument(initial_weight=init_w, claim=claim, premise=asm_objs)
             argument_instances.append(weighted_arg)
 
-        print("Arguments instances:")
-        for arg in argument_instances:
-            print(arg.name, arg.claim, [asm.name for asm in arg.premise], "initial_weight", arg.initial_weight)
+        if self.debug:
+            print("Arguments instances:")
+            for arg in argument_instances:
+                print(arg.name, arg.claim, [asm.name for asm in arg.premise], "initial_weight", arg.initial_weight)
 
         print(f"{time.time()-st:.2f} seconds for argument construction - {len(arguments)} arguments")
 
@@ -515,10 +516,10 @@ class ABAF:
                         print(f"Attack: {a1.name} -> {a2.name} ({a1.contrary} in {a2.body})")
         return bag
 
-    def to_bag(self, weight_agg=SPA.SetProductAggregation):
+    def to_bag(self, weight_agg=SetProductAggregation()):
         return self._build_bag(weight_agg)
 
-    def to_bsaf(self, weight_agg=SPA.SetProductAggregation):
+    def to_bsaf(self, weight_agg=SetProductAggregation()):
         args = self.build_arguments_procedure(weight_agg) if not self.arguments else self.arguments
         bsaf = BSAF(arguments=args, assumptions=self.assumptions)
         return bsaf

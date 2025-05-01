@@ -98,11 +98,12 @@ class DiscreteModular:
         if self.BSAF is None:
             raise AttributeError("Model does not have BAG attached")
         
-        print("\nDiscrete modular, iterations: ", iterations,"\n-------")
-        print("Aggregation: ", self.aggregation.name)
-        print("Influence: ", self.influence.name)
-        print("Set Aggregation: ", self.set_aggregation.name)
-        print("-------\n")
+        if verbose:
+            print("\nDiscrete modular, iterations: ", iterations,"\n-------")
+            print("Aggregation: ", self.aggregation.name)
+            print("Influence: ", self.influence.name)
+            print("Set Aggregation: ", self.set_aggregation.name)
+            print("-------\n")
 
         state = {a: a.initial_weight for a in self.assumptions}
         count = 0

@@ -18,11 +18,11 @@ from semantics.modular.QuadraticMaximumInfluence import QuadraticMaximumInfluenc
 
 # ─── Config ─────────────────────────────────────────────────────────
 INPUT_DIR       = Path("../dependency-graph-alternative/input_data_nf").resolve()
-OUTPUT_PKL      = "convergence_results.pkl"
+OUTPUT_PKL      = "convergence_results_to10m.pkl"
 MAX_FILES       = 0       # 0 = no limit
 MIN_SENTENCES   = 0
 MAX_SENTENCES   = 25
-TIMEOUT_SECONDS = 60      # per‐file timeout
+TIMEOUT_SECONDS = 600      # per‐file timeout
 
 # pick only .aba with s between MIN_SENTENCES and MAX_SENTENCES
 pattern_s = re.compile(r"_s(\d+)_")
@@ -212,4 +212,4 @@ if __name__ == "__main__":
         with open(OUTPUT_PKL, "wb") as pf:
             pickle.dump(results, pf)
 
-    print(f"✅  Complete — partial results saved in {OUTPUT_PKL}")
+    print(f"✅  Complete — results saved in {OUTPUT_PKL}")

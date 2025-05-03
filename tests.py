@@ -1,5 +1,21 @@
 import unittest
 import os, sys
+import re
+import pickle
+from pathlib import Path
+from tqdm import tqdm
+from multiprocessing import Process, Queue
+from collections import defaultdict
+import sys
+sys.path.append("../")
+
+from ABAF import ABAF
+from semantics.bsafDiscreteModular import DiscreteModular
+from semantics.modular.ProductAggregation        import ProductAggregation
+from semantics.modular.SetProductAggregation     import SetProductAggregation
+from semantics.modular.SumAggregation            import SumAggregation
+from semantics.modular.LinearInfluence           import LinearInfluence
+from semantics.modular.QuadraticMaximumInfluence import QuadraticMaximumInfluence
 
 from BSAF.BSAF import BSAF
 from BSAF.Argument import Argument
@@ -278,31 +294,11 @@ class TestABAF(unittest.TestCase):
             args.add(arg.claim.name)
 
         # Check that abaf.derived == {abaf.arguments}
-        self.assertEqual(args_claims, args, f"Expected derived arguments: {abaf.arguments}, but got: {abaf.derived}")
+        self.assertEqual(args_claims, args, f"Expected derived arguments: {abaf.arguments}, but got: {abaf.derived_in}")
         print("Arguments derived procedurally and from ASP are the same.")
 
 
     def test_argument_compare2(self):
-        """Load an ICCMA file and convert it to ABAF format.
-        # Example. The ABA framework with rules 
-        # p :- q,a.
-        # q :- .
-        # r :- b,c. 
-        # assumptions a,b,c
-        # contraries a̅ = r, b̅ = s, c̅ = t 
-        # is specified as follows, with atom-indexing a=1, b=2, c=3, p=4, q=5, r=6, s=7, t=8.
-
-        p aba 8
-        a 1
-        a 2
-        a 3
-        c 1 6
-        c 2 7
-        c 3 8
-        r 4 5 1
-        r 5
-        r 6 2 3        
-        """
         
         for i in range(0, 4):
             iccma_file = f"../dependency-graph-alternative/input_data_nf/non_flat_1_s25_c0.02_n0.2_a0.3_r5_b5_{i}.aba"
@@ -324,7 +320,8 @@ class TestABAF(unittest.TestCase):
 
             
             ## build the arguments
-            abaf.build_arguments_procedure(SetProductAggregation())
+            # abaf.build_arguments_procedure(SetProductAggregation())
+            abaf.build_arguments_procedure_dict(SetProductAggregation())
 
             ## Format the arguments
             args_claims2 = set()
@@ -337,7 +334,7 @@ class TestABAF(unittest.TestCase):
             ## check the premises of the arguments - see if they are the same
 
             # Check that abaf.derived == {abaf.arguments}
-            self.assertEqual(args_claims, args_claims2, f"Expected derived arguments: {abaf.arguments}, but got: {abaf.derived}")
+            self.assertEqual(args_claims, args_claims2, f"Expected derived arguments: {abaf.arguments}, but got: {abaf.derived_in}")
             ## Check that the premises are the same
             # self.assertEqual(args_premises, args_premises2, f"Expected derived arguments: {args_premises}, but got: {args_premises2}")
             print("Arguments derived procedurally and from ASP are the same.")
@@ -380,18 +377,243 @@ class TestABAF(unittest.TestCase):
         else:
             self.assertTrue(False, "Expected an error when loading ABAF from ICCMA file with multiple contraries, but no error was raised.")
 
-
-    ### attacks and supports correspont to arguments deriving assumptions and contraries of assumptions
-
-    ### Check for FLAT and non-FLAT
+    def test_abaf_flatness(self):
         
+        iccma_file = "data_generation/abaf/nf_atm_s20_n0.01_a0.5_r2_b16_0.aba"
         
-TestBSAF().test_aba_bsaf_1()
-TestBSAF().test_aba_bsaf_2()
-TestABAF().test_abaf_from_iccma_file()
-TestABAF().test_abaf_from_iccma_file2()
-TestABAF().test_argument_compare()
-TestABAF().test_argument_compare2()
+        ### Catch that the ABAF errors because of multiple contraries
+        abaf = ABAF(path=iccma_file)
+        print(f"ABAF non flat: {abaf.non_flat}")
+        abaf.build_arguments_procedure_dict(SetProductAggregation())
+
+        print(abaf)
+        self.assertFalse(abaf.non_flat, "Expected the ABAF to be flat, but it was not.")
+        
+        iccma_file = "data_generation/abaf/nf_atm_s60_n0.2_a0.5_r8_b8_9.aba"
+        
+        ### Catch that the ABAF errors because of multiple contraries
+        abaf = ABAF(path=iccma_file)
+        print(f"ABAF non flat: {abaf.non_flat}")
+        abaf.build_arguments_procedure_dict(SetProductAggregation())
+
+        print(abaf)
+
+        self.assertTrue(abaf.non_flat, "Expected the ABAF to be non-flat, but it was not.")        
+
+    # def argument_creation_speed_test(self):
+
+    #     procedure1_times = []
+    #     procedure2_times = []
+
+    #     for i in range(0, 4):
+    #         iccma_file = f"../dependency-graph-alternative/input_data_nf/non_flat_1_s25_c0.02_n0.2_a0.3_r5_b5_{i}.aba"            
+    #         ## Compare arguments to derived using cling
+    #         ## Sped up prcedure
+    #         abaf = ABAF(path=iccma_file)
+    #         start = time.time()
+    #         args = abaf._build_arguments(SetProductAggregation())
+    #         print("Time to build arguments: ", time.time() - start)
+    #         ## collect times
+    #         procedure1_times.append(time.time() - start)
+
+    #         abaf1 = ABAF(path=iccma_file)
+    #         ## Original prcedure
+    #         start = time.time()
+    #         args1 = abaf1.build_arguments_procedure_og(SetProductAggregation())
+    #         print("Time to build arguments: ", time.time() - start)
+    #         ## collect times
+    #         procedure2_times.append(time.time() - start)
+    #         ## Check that the arguments are the same
+    #         # self.assertEqual(args, args1, f"Expected derived arguments: {args}, but got: {args1}")
+
+    #         ## print average and std
+    #         print(f"Procedure 1 avg Time (std): {sum(procedure1_times)/len(procedure1_times)} ({math.sqrt(sum([(x - sum(procedure1_times)/len(procedure1_times))**2 for x in procedure1_times])/len(procedure1_times))})")
+    #         print(f"Procedure 2 avg Time (std): {sum(procedure2_times)/len(procedure2_times)} ({math.sqrt(sum([(x - sum(procedure2_times)/len(procedure2_times))**2 for x in procedure2_times])/len(procedure2_times))})")
+
+            
+    def test_convergence_single_file(self):
+        """
+        Test the convergence of a single file.
+        """
+        # ─── Config ──────────────────────────────────────────────────────────────
+        INPUT_DIR       = Path("data_generation/abaf/").resolve()
+        OUTPUT_PKL      = "convergence_results_to10m_nf_atm.pkl"
+        MAX_FILES       = 0       # 0 = no limit
+        MIN_SENTENCES   = 0
+        MAX_SENTENCES   = 100
+        TIMEOUT_SECONDS = 600      # per‐file timeout
+
+        pattern_s = re.compile(r"_s(\d+)_")
+        all_aba   = sorted(INPUT_DIR.glob("*.aba"))
+        aba_paths = [
+            p for p in all_aba
+            if (m := pattern_s.search(p.name))
+            and MIN_SENTENCES <= int(m.group(1)) <= MAX_SENTENCES
+        ]
+        if MAX_FILES > 0:
+            aba_paths = aba_paths[:MAX_FILES]
+
+        param_pat = re.compile(
+            r"_s(?P<s>\d+)_"
+            r"n(?P<n>[\d.]+)_"
+            r"a(?P<a>[\d.]+)_"
+            r"r(?P<r>\d+)_"
+            r"b(?P<b>\d+)"
+        )
+
+        RUNS = [
+            ("DF-QuAD", dict(
+                aggregation     = ProductAggregation(),
+                influence       = LinearInfluence(conservativeness=1),
+                set_aggregation = SetProductAggregation()
+            )),
+            ("QE",      dict(
+                aggregation     = SumAggregation(),
+                influence       = QuadraticMaximumInfluence(conservativeness=1),
+                set_aggregation = SetProductAggregation()
+            ))
+        ]
+
+        aba_path = "data_generation/abaf/nf_atm_s20_n0.01_a0.5_r2_b16_0.aba"
+
+        entries = []
+        # 1) load & build BSAF (heavy!)
+        abaf = ABAF(path=str(aba_path))
+        print(f"Loaded {aba_path.split('/')[-1]}. Flat: {not abaf.non_flat}")
+        bsaf = abaf.to_bsaf()  # this sets abaf.non_flat, but we trust disk flag
+
+        # 2) compute size‐stats
+        num_assumptions = len(abaf.assumptions)
+        num_rules       = len(abaf.rules)
+        num_sentences   = len(abaf.sentences)
+
+        # 3) initial strengths
+        initial_strengths = {
+            a.name: a.initial_weight
+            for a in bsaf.assumptions
+        }
+
+        # 4) for each model configuration
+        for model_name, cfg in RUNS:
+
+            # build & solve
+            model       = DiscreteModular(
+                            BSAF=bsaf,
+                            aggregation=cfg["aggregation"],
+                            influence=cfg["influence"],
+                            set_aggregation=cfg["set_aggregation"]
+                        )
+            final_state = model.solve(20, generate_plot=True, verbose=False)
+
+            # record final strengths & convergence
+            final_strengths = {a.name: final_state[a] for a in model.assumptions}
+            per_arg         = model.has_converged(epsilon=1e-3, last_n=5)
+            global_conv     = model.is_globally_converged(epsilon=1e-3, last_n=5)
+            total           = len(per_arg)
+            prop_conv       = (sum(per_arg.values()) / total) if total else 0.0
+        
+            print(f"Model: {model_name}, Global Convergence: {global_conv}, Proportion Converged: {prop_conv}")
+
+    def rerun_unfinished_flat(self):
+        """
+        Rerun unfinished flat files.
+        """
+
+        # 2) Load your previously‐computed runs
+        with open("convergence_results_to10m_nf_atm.pkl","rb") as pf:
+            runs = pickle.load(pf)
+
+        # 3) Group timeouts by file
+        file_timeouts = defaultdict(list)
+        for r in runs:
+            file_timeouts[r["file"]].append(r.get("timeout"))
+
+        # ─── Config ──────────────────────────────────────────────────────────────
+        INPUT_DIR       = Path("data_generation/abaf/").resolve()
+        OUTPUT_PKL      = "convergence_results_to10m_nf_atm.pkl"
+        MAX_FILES       = 0       # 0 = no limit
+        MIN_SENTENCES   = 0
+        MAX_SENTENCES   = 100
+        TIMEOUT_SECONDS = 600      # per‐file timeout
+
+        pattern_s = re.compile(r"_s(\d+)_")
+        all_aba   = sorted(INPUT_DIR.glob("*.aba"))
+        aba_paths = [
+            p for p in all_aba
+            if (m := pattern_s.search(p.name))
+            and MIN_SENTENCES <= int(m.group(1)) <= MAX_SENTENCES
+        ]
+        if MAX_FILES > 0:
+            aba_paths = aba_paths[:MAX_FILES]
+
+        param_pat = re.compile(
+            r"_s(?P<s>\d+)_"
+            r"n(?P<n>[\d.]+)_"
+            r"a(?P<a>[\d.]+)_"
+            r"r(?P<r>\d+)_"
+            r"b(?P<b>\d+)"
+        )
+
+        RUNS = [
+            ("DF-QuAD", dict(
+                aggregation     = ProductAggregation(),
+                influence       = LinearInfluence(conservativeness=1),
+                set_aggregation = SetProductAggregation()
+            )),
+            ("QE",      dict(
+                aggregation     = SumAggregation(),
+                influence       = QuadraticMaximumInfluence(conservativeness=1),
+                set_aggregation = SetProductAggregation()
+            ))
+        ]
+        count = 0
+        for aba_path, timeout in file_timeouts.items():
+
+            # aba_path = "data_generation/abaf/nf_atm_s20_n0.01_a0.5_r2_b16_0.aba"
+            if any(t==False for t in timeout):
+                print(f"Skipping {aba_path} with timeout {timeout}")
+                continue
+
+            count += 1
+            print(f"{count}: Processing {aba_path} with timeout {timeout}")
+            # 1) load & build BSAF (heavy!)
+            abaf = ABAF(path=Path(INPUT_DIR,aba_path))
+            print(f"Loaded {aba_path.split('/')[-1]}. Flat: {not abaf.non_flat}")
+            bsaf = abaf.to_bsaf()  # this sets abaf.non_flat, but we trust disk flag
+
+
+
+            # 4) for each model configuration
+            for model_name, cfg in RUNS:
+
+                # build & solve
+                model       = DiscreteModular(
+                                BSAF=bsaf,
+                                aggregation=cfg["aggregation"],
+                                influence=cfg["influence"],
+                                set_aggregation=cfg["set_aggregation"]
+                            )
+                final_state = model.solve(20, generate_plot=True, verbose=False)
+
+                # record final strengths & convergence
+                final_strengths = {a.name: final_state[a] for a in model.assumptions}
+                per_arg         = model.has_converged(epsilon=1e-3, last_n=5)
+                global_conv     = model.is_globally_converged(epsilon=1e-3, last_n=5)
+                total           = len(per_arg)
+                prop_conv       = (sum(per_arg.values()) / total) if total else 0.0
+            
+                print(f"Model: {model_name}, Global Convergence: {global_conv}, Proportion Converged: {prop_conv}")
+                    
+# TestBSAF().test_aba_bsaf_1()
+# TestBSAF().test_aba_bsaf_2()
+# TestABAF().test_abaf_from_iccma_file()
+# TestABAF().test_abaf_from_iccma_file2()
+# TestABAF().test_argument_compare()
+# TestABAF().test_argument_compare2()
+# TestABAF().test_abaf_flatness()
+# TestABAF().argument_creation_speed_test()
+# TestABAF().test_convergence_single_file()
+TestABAF().rerun_unfinished_flat()
 
 print("All tests passed.")
 

@@ -9,6 +9,7 @@ from constants import DEFAULT_WEIGHT
 from semantics.modular.SetProductAggregation import SetProductAggregation 
 
 from collections import defaultdict
+from tqdm import tqdm
 import itertools
 import clingo
 import os, time
@@ -56,10 +57,7 @@ class ABAF:
 
         # --- Flatness check: no assumption may appear as the head of a rule ---
         assump_names = {a.name for a in self.assumptions}
-        non_flat = [rule.head.name for rule in self.rules if rule.head.name in assump_names]
-        if non_flat:
-            self.non_flat = True
-
+        self.non_flat = any([rule.head.name in assump_names for rule in self.rules])
     def _load_from_file(self, path):
         with open(path, "r") as f:
             text = f.read().split("\n")
@@ -134,7 +132,7 @@ class ABAF:
             else:
                 assumption = Assumption(asmpt)
             self.assumptions.add(assumption)
-            self.sentences.add(assumption)
+            # self.sentences.add(assumption)
         for sent in sentences:
             sent = Sentence(sent, initial_weight=DEFAULT_WEIGHT)
             self.sentences.add(sent)
@@ -454,7 +452,7 @@ class ABAF:
             for prem_names, claim_name in key_list:
                 by_claim[claim_name].append(prem_names)
 
-            for rule in self.rules:
+            for rule in tqdm(self.rules, desc="Analysing rules"):
                 # skip if any body atom has no arguments yet
                 if any(lit.name not in by_claim for lit in rule.body):
                     continue
@@ -505,7 +503,7 @@ class ABAF:
         self.arguments = argument_instances
         return argument_instances
 
-    def build_arguments_procedure2(self,weight_agg):
+    def build_arguments_procedure_og(self,weight_agg):
         """
         Generate all arguments (assumption arguments and derived arguments), with claim and premises
         Returns: 
@@ -526,7 +524,7 @@ class ABAF:
         while True:
             new_args = 0
 
-            for rule in self.rules:
+            for rule in tqdm(self.rules, desc="Analysing rules"):
                 claim = rule.head
 
                 all_arg_for_all_body_els = [[arg for arg in arguments if arg[1].name == sentence.name] for sentence in rule.body]
@@ -554,7 +552,7 @@ class ABAF:
 
         argument_instances = []
         for arg in arguments:
-            claim = arg[1]
+            claim = arg[1] ## THIS NEEDS TO BE A SENTENCE
             body_names = [asm.name for asm in arg[0]]
             asm_objs = [next(a for a in self.assumptions if a.name == s) for s in body_names]
             support_weights = {asm.name: asm.initial_weight for asm in asm_objs}

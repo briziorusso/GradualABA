@@ -1,0 +1,170 @@
+p aba 40
+a a0
+a a1
+a a2
+a a3
+a a4
+a a5
+a a6
+a a7
+a a8
+a a9
+a a10
+a a11
+a a12
+a a13
+a a14
+a a15
+a a16
+a a17
+a a18
+a a19
+c a0 s0
+c a1 s1
+c a2 s2
+c a3 s3
+c a4 s4
+c a5 s5
+c a6 s6
+c a7 s7
+c a8 s8
+c a9 s9
+c a10 s10
+c a11 s11
+c a12 s12
+c a13 s13
+c a14 s14
+c a15 s15
+c a16 s16
+c a17 s17
+c a18 s18
+c a19 s19
+r s0 a5 a4 a3 a15
+r s0 a6 a16
+r s0 a15 a6
+r s0 a2
+r s1 a4
+r s1 a5 a4 a1 a9
+r s1 a10 a3 a7
+r s1 a8 a0 a9
+r s1 a11 a13
+r s1 a6 a12
+r s1 a0 a11 a3
+r s2 a18 a15 a3
+r s2 a7
+r s2 a10 a15
+r s2 a13 a3 a0
+r s2 a13 a19 a10
+r s3 a15 a13 a8 a4
+r s4 a14 a18
+r s4 a18 a5
+r s4 a4 a5
+r s4 a18 a13 a16
+r s4 a18 a13 a0 a14
+r s4 a1 a3 a0
+r s5 a10
+r s6 a19
+r s6 a16 a14 a3 a18
+r s6 a15
+r s6 a6 a2
+r s6 a7 a11
+r s6 a12
+r s7 a8
+r s7 a10
+r s7 a13 a2 a7 a14
+r s7 a3 a1 a2
+r s7 a4 a6
+r s7 a4
+r s7 a8 a10
+r s8 a18 a13
+r s8 a2
+r s8 a12
+r s8 a8
+r s9 a4
+r s9 a3
+r s9 a17 a16 a14 a10
+r s10 a9 a19 a15 a6
+r s10 a0 a14
+r s10 a7 a18 a9 a3
+r s10 a1 a5
+r s10 a3 a10 a12 a1
+r s10 a17 a5 a6
+r s10 a17 a4 a16
+r s10 a1 a19
+r s11 a19 a15
+r s11 a3 a1 a7
+r s11 a2
+r s11 a4
+r s11 a12 a3
+r s11 a14
+r s11 a5 a3 a18 a9
+r s11 a17
+r s12 a8 a11 a2 a19
+r s12 a7 a10
+r s12 a12 a18 a17 a10
+r s12 a11 a6 a5
+r s13 a7
+r s13 a9 a13
+r s13 a7
+r s13 a18 a15 a13
+r s13 a14 a2 a12
+r s13 a9
+r s13 a1 a12 a11
+r s13 a5 a8 a10 a19
+r s14 a1
+r s14 a3
+r s14 a13 a16 a4
+r s14 a9 a19
+r s14 a5 a9 a19 a10
+r s14 a15 a2 a13
+r s14 a19
+r s15 a14
+r s15 a17 a9 a13
+r s15 a11 a5 a17
+r s15 a14
+r s16 a12 a2
+r s16 a14
+r s16 a9 a7
+r s16 a0 a12
+r s16 a13 a2 a15
+r s16 a11
+r s16 a5
+r s17 a3 a18 a0 a11
+r s17 a19
+r s17 a15 a3
+r s18 a2 a1 a15
+r s18 a14 a16
+r s18 a10
+r s18 a13 a14 a3 a4
+r s18 a15
+r s18 a10 a15
+r s18 a3
+r s18 a0 a6 a3 a8
+r s19 a19
+r s19 a2 a7 a18 a8
+r s19 a7 a16 a17
+r s19 a4 a14 a0
+r s19 a19
+r s19 a3
+r s19 a18
+r s19 a14 a16 a6
+r a17 a2 a9
+r a10 a5 a0 a3 a19
+r a10 a0
+r a10 a13 a19
+r a10 a1 a15
+r a10 a3 a0
+r a10 a18 a4 a7 a14
+r a4 a12 a11
+r a4 a19 a3 a18 a2
+r a4 a18 a19 a10 a3
+r a4 a9 a7 a12
+r a4 a11 a0 a17
+r a4 a5 a16 a12 a13
+r a9 a8 a6
+r a9 a9 a8 a12
+r a9 a1 a14 a10
+r a9 a2 a11 a6 a12
+r a9 a18 a4 a7 a5
+r a9 a10 a16 a12
+r a9 a17 a2 a4

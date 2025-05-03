@@ -1,0 +1,193 @@
+p aba 60
+a a0
+a a1
+a a2
+a a3
+a a4
+a a5
+a a6
+a a7
+a a8
+a a9
+a a10
+a a11
+a a12
+a a13
+a a14
+a a15
+a a16
+a a17
+a a18
+a a19
+a a20
+a a21
+a a22
+a a23
+a a24
+a a25
+a a26
+a a27
+a a28
+a a29
+c a0 s0
+c a1 s1
+c a2 s2
+c a3 s3
+c a4 s4
+c a5 s5
+c a6 s6
+c a7 s7
+c a8 s8
+c a9 s9
+c a10 s10
+c a11 s11
+c a12 s12
+c a13 s13
+c a14 s14
+c a15 s15
+c a16 s16
+c a17 s17
+c a18 s18
+c a19 s19
+c a20 s20
+c a21 s21
+c a22 s22
+c a23 s23
+c a24 s24
+c a25 s25
+c a26 s26
+c a27 s27
+c a28 s28
+c a29 s29
+r s0 a8 a2
+r s0 a10 a0
+r s0 a15
+r s0 a3
+r s0 a25 a3
+r s0 a27 a23
+r s0 a28
+r s1 a8
+r s1 a6
+r s2 a19
+r s2 a4 a22
+r s2 a29
+r s2 a5
+r s2 a8 a11
+r s2 a3 a13
+r s2 a0
+r s3 a25 a12
+r s3 a18 a21
+r s3 a15
+r s3 a29 a6
+r s3 a4 a20
+r s3 a7
+r s4 a9 a6
+r s4 a12 a26
+r s4 a4 a18
+r s4 a17 a2
+r s4 a1 a28
+r s4 a19
+r s4 a10 a9
+r s4 a5
+r s5 a1 a12
+r s6 a19
+r s6 a19 a8
+r s7 a6 a10
+r s7 a7 a20
+r s7 a15
+r s7 a4
+r s7 a19
+r s7 a27 a15
+r s7 a5
+r s7 a25
+r s8 a2
+r s8 a12
+r s9 a21
+r s9 a27 a28
+r s9 a20 a26
+r s10 a24 a12
+r s10 a5 a22
+r s10 a2
+r s10 a18 a20
+r s10 a7 a10
+r s11 a28 a18
+r s11 a26
+r s11 a29 a16
+r s11 a21
+r s11 a18 a1
+r s11 a20 a25
+r s12 a29
+r s13 a1
+r s13 a2
+r s13 a18 a20
+r s13 a26 a10
+r s14 a18 a1
+r s14 a21 a14
+r s14 a18 a1
+r s14 a7 a26
+r s14 a1 a2
+r s14 a22 a8
+r s14 a26
+r s14 a12
+r s15 a0
+r s15 a10 a23
+r s15 a21
+r s15 a18
+r s15 a19 a18
+r s15 a27
+r s16 a2
+r s16 a4
+r s16 a8 a20
+r s17 a12 a18
+r s17 a12 a7
+r s17 a6
+r s18 a17
+r s18 a26
+r s19 a19
+r s19 a17 a10
+r s19 a14 a29
+r s19 a8 a27
+r s19 a25
+r s19 a28 a11
+r s19 a15
+r s19 a7 a23
+r s20 a21
+r s20 a16 a24
+r s21 a2
+r s21 a11 a6
+r s21 a27 a29
+r s21 a13
+r s21 a24
+r s21 a20 a4
+r s21 a6 a12
+r s21 a27
+r s22 a11
+r s22 a3
+r s22 a18
+r s22 a16 a22
+r s22 a11 a4
+r s23 a10
+r s23 a18 a6
+r s23 a17
+r s23 a1 a9
+r s23 a25 a20
+r s23 a10
+r s24 a3 a5
+r s24 a24
+r s24 a26
+r s24 a12 a23
+r s24 a9 a26
+r s25 a26
+r s25 a11 a24
+r s26 a22 a14
+r s26 a19 a16
+r s26 a4 a15
+r s27 a3 a8
+r s27 a9
+r s28 a24
+r s28 a28
+r s28 a27
+r s28 a20
+r s28 a0 a29
+r s29 a22
+r a8 a7 a24

@@ -1,0 +1,196 @@
+p aba 60
+a a0
+a a1
+a a2
+a a3
+a a4
+a a5
+a a6
+a a7
+a a8
+a a9
+a a10
+a a11
+a a12
+a a13
+a a14
+a a15
+a a16
+a a17
+a a18
+a a19
+a a20
+a a21
+a a22
+a a23
+a a24
+a a25
+a a26
+a a27
+a a28
+a a29
+c a0 s0
+c a1 s1
+c a2 s2
+c a3 s3
+c a4 s4
+c a5 s5
+c a6 s6
+c a7 s7
+c a8 s8
+c a9 s9
+c a10 s10
+c a11 s11
+c a12 s12
+c a13 s13
+c a14 s14
+c a15 s15
+c a16 s16
+c a17 s17
+c a18 s18
+c a19 s19
+c a20 s20
+c a21 s21
+c a22 s22
+c a23 s23
+c a24 s24
+c a25 s25
+c a26 s26
+c a27 s27
+c a28 s28
+c a29 s29
+r s0 a22 a24
+r s1 a11 a21
+r s1 a14
+r s1 a19 a0
+r s2 a19 a27
+r s2 a12 a5
+r s2 a27
+r s2 a26
+r s2 a12
+r s2 a3
+r s2 a16
+r s3 a24
+r s3 a19 a16
+r s3 a18 a5
+r s3 a2 a1
+r s3 a5
+r s3 a26
+r s3 a9
+r s3 a28 a2
+r s4 a3
+r s4 a25 a20
+r s5 a16 a21
+r s5 a5 a4
+r s5 a24
+r s5 a1 a28
+r s5 a11 a23
+r s5 a21
+r s6 a9
+r s6 a28 a24
+r s7 a1 a15
+r s7 a19 a24
+r s7 a11
+r s7 a20
+r s7 a27
+r s7 a18
+r s8 a22
+r s8 a14 a18
+r s8 a4
+r s8 a3
+r s8 a4
+r s9 a3 a22
+r s10 a29 a24
+r s10 a26 a10
+r s10 a2 a22
+r s10 a2
+r s10 a27
+r s10 a6 a21
+r s10 a8 a19
+r s10 a29 a25
+r s11 a11 a1
+r s11 a17
+r s11 a25
+r s11 a22
+r s11 a21
+r s11 a9
+r s12 a6 a24
+r s12 a12
+r s12 a7 a1
+r s12 a16 a1
+r s13 a0
+r s13 a18
+r s14 a7 a4
+r s14 a24 a12
+r s14 a7
+r s14 a3
+r s14 a3
+r s14 a6 a12
+r s15 a0
+r s15 a12
+r s15 a10
+r s15 a8 a17
+r s15 a17
+r s15 a22
+r s15 a6
+r s16 a2
+r s16 a15 a22
+r s16 a26 a20
+r s16 a15
+r s17 a10
+r s17 a0
+r s17 a15
+r s17 a9
+r s17 a9 a23
+r s17 a14 a9
+r s18 a23 a13
+r s18 a6
+r s18 a19
+r s18 a20
+r s18 a25
+r s18 a28
+r s18 a6
+r s18 a19
+r s19 a5 a15
+r s20 a9 a2
+r s20 a14 a22
+r s20 a15 a4
+r s20 a25
+r s20 a11 a10
+r s20 a3 a25
+r s20 a22 a14
+r s20 a9 a26
+r s21 a25
+r s21 a5 a11
+r s21 a13 a7
+r s21 a16 a20
+r s22 a9
+r s23 a6
+r s23 a5
+r s23 a8
+r s24 a29 a16
+r s24 a8
+r s24 a26
+r s24 a4 a3
+r s24 a9 a16
+r s24 a3 a4
+r s24 a1 a12
+r s24 a20 a14
+r s25 a0
+r s25 a15 a26
+r s25 a9
+r s25 a21
+r s25 a14
+r s25 a21
+r s25 a15 a4
+r s25 a11
+r s26 a8
+r s27 a2
+r s27 a5 a0
+r s27 a6 a10
+r s27 a13
+r s27 a1 a0
+r s27 a7
+r s28 a19
+r s28 a7
+r s29 a1 a28

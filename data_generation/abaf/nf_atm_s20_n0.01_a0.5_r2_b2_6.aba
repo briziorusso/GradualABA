@@ -1,0 +1,37 @@
+p aba 20
+a a0
+a a1
+a a2
+a a3
+a a4
+a a5
+a a6
+a a7
+a a8
+a a9
+c a0 s0
+c a1 s1
+c a2 s2
+c a3 s3
+c a4 s4
+c a5 s5
+c a6 s6
+c a7 s7
+c a8 s8
+c a9 s9
+r s0 a8
+r s0 a8 a3
+r s1 a2
+r s1 a7
+r s2 a8
+r s3 a3 a0
+r s4 a1 a2
+r s5 a2
+r s5 a8
+r s6 a5 a1
+r s6 a4
+r s7 a9
+r s7 a2 a5
+r s8 a3
+r s8 a9 a4
+r s9 a1 a4

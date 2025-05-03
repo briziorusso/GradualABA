@@ -1,0 +1,108 @@
+p aba 60
+a a0
+a a1
+a a2
+a a3
+a a4
+a a5
+a a6
+a a7
+a a8
+a a9
+a a10
+a a11
+a a12
+a a13
+a a14
+a a15
+a a16
+a a17
+a a18
+a a19
+a a20
+a a21
+a a22
+a a23
+a a24
+a a25
+a a26
+a a27
+a a28
+a a29
+c a0 s0
+c a1 s1
+c a2 s2
+c a3 s3
+c a4 s4
+c a5 s5
+c a6 s6
+c a7 s7
+c a8 s8
+c a9 s9
+c a10 s10
+c a11 s11
+c a12 s12
+c a13 s13
+c a14 s14
+c a15 s15
+c a16 s16
+c a17 s17
+c a18 s18
+c a19 s19
+c a20 s20
+c a21 s21
+c a22 s22
+c a23 s23
+c a24 s24
+c a25 s25
+c a26 s26
+c a27 s27
+c a28 s28
+c a29 s29
+r s0 a26 a7 a29 a17 a8 a12 a27 a14
+r s1 a12 a8 a29 a22 a0 a3 a25 a17 a28 a1 a15 a5
+r s1 a19 a9 a11 a14 a25 a24 a20 a6 a0 a26 a5 a15
+r s2 a3 a26
+r s3 a17 a14 a0 a21 a13 a25
+r s4 a3 a15 a17 a24 a5 a18 a11 a14 a28 a29 a16 a22
+r s5 a26 a17 a25 a1 a15 a16 a20 a28 a3 a24 a9 a22 a14 a0
+r s6 a16 a2 a18 a27 a13 a17 a8 a7 a15 a26 a21 a6 a24 a1
+r s6 a14 a9 a17 a21 a19 a29 a6 a27 a11 a28 a8
+r s7 a17 a20 a28 a13 a25
+r s7 a3 a9 a14 a23 a0 a21
+r s8 a23 a2 a17 a16 a26 a24 a9 a18 a22 a14 a20 a15 a12 a0
+r s9 a25 a21 a24 a12 a28
+r s9 a10 a29 a12 a18 a20 a21 a28 a17 a14 a13 a16 a26 a23
+r s10 a0 a4 a12 a27
+r s10 a25 a13 a8 a1 a12 a24 a17
+r s11 a16 a8
+r s11 a29 a10
+r s12 a14 a2 a19 a15 a23 a17 a24 a4 a11 a8
+r s13 a29 a16 a18 a26 a0 a7 a21 a13 a5 a3 a27 a25 a28 a23 a15 a10
+r s14 a26 a16 a17 a13 a6
+r s15 a27 a14
+r s15 a12 a2 a17 a1 a3 a9 a16 a28 a18 a6 a4 a22 a23 a20 a14
+r s16 a25 a29 a26 a15 a7 a2 a21 a24
+r s16 a17 a6 a5 a25 a12 a28 a29 a7 a3 a27 a23 a2 a15 a19 a0 a16
+r s17 a10
+r s18 a2 a5 a16 a25 a23 a9 a3 a4 a0 a28
+r s18 a15 a23
+r s19 a3 a24 a27
+r s19 a9 a1 a20 a16 a13 a10 a21 a18 a28 a14 a5 a23 a0
+r s20 a10 a1 a22 a17 a28 a13 a20 a29 a6 a23 a27 a15 a3 a24 a18 a0
+r s20 a26 a1 a21 a6 a0 a14 a12 a20 a16 a5
+r s21 a15 a21 a25 a24 a2 a26 a20 a13 a9 a19 a16 a3 a0 a5 a12 a11
+r s22 a7 a10 a24 a9 a27 a20 a25 a18 a14 a23 a1 a19 a29 a3 a13
+r s22 a27 a1 a26 a11 a23 a6
+r s23 a26 a11 a25 a21 a6 a27 a13 a2 a12 a20
+r s24 a0 a9 a7 a1 a27 a8 a5 a10 a3 a17
+r s24 a19 a15 a9 a0
+r s25 a19 a4 a22 a3 a7 a8 a13 a23
+r s25 a22 a21 a10 a7 a0 a24 a29 a15
+r s26 a8 a23
+r s27 a0 a17 a27 a6 a9 a25 a8 a22 a23 a12
+r s27 a20 a0 a10 a17 a15 a5 a6 a18 a13 a4 a11 a7 a22
+r s28 a27 a17 a4 a21 a13 a9 a22 a14 a1
+r s29 a27 a3 a19
+r a7 a21 a23 a11 a9 a14 a22 a8 a4 a7 a2
+r a7 a26 a28 a24 a29 a14 a9 a23 a10 a22 a4 a7 a11 a17 a3

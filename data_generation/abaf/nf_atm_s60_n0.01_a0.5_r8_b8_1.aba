@@ -1,0 +1,173 @@
+p aba 60
+a a0
+a a1
+a a2
+a a3
+a a4
+a a5
+a a6
+a a7
+a a8
+a a9
+a a10
+a a11
+a a12
+a a13
+a a14
+a a15
+a a16
+a a17
+a a18
+a a19
+a a20
+a a21
+a a22
+a a23
+a a24
+a a25
+a a26
+a a27
+a a28
+a a29
+c a0 s0
+c a1 s1
+c a2 s2
+c a3 s3
+c a4 s4
+c a5 s5
+c a6 s6
+c a7 s7
+c a8 s8
+c a9 s9
+c a10 s10
+c a11 s11
+c a12 s12
+c a13 s13
+c a14 s14
+c a15 s15
+c a16 s16
+c a17 s17
+c a18 s18
+c a19 s19
+c a20 s20
+c a21 s21
+c a22 s22
+c a23 s23
+c a24 s24
+c a25 s25
+c a26 s26
+c a27 s27
+c a28 s28
+c a29 s29
+r s0 a22 a24 a4 a14 a11
+r s1 a19 a15 a29 a0 a16 a13 a18 a11
+r s1 a12 a5 a1 a3 a26 a29 a4
+r s2 a16 a26 a15
+r s2 a24 a12 a19
+r s3 a12 a2 a1
+r s3 a5
+r s3 a26
+r s3 a9 a8 a28
+r s3 a16 a19
+r s4 a3
+r s4 a25 a20 a23 a10 a26 a16 a21 a22
+r s5 a4 a27 a2
+r s5 a1 a28 a18 a8 a11 a23
+r s5 a21 a19 a2
+r s5 a9 a15
+r s5 a22 a13 a1 a15 a28 a19
+r s5 a11 a4
+r s5 a27 a21
+r s5 a18 a25 a9
+r s6 a14 a18 a1 a4 a0 a3 a24
+r s6 a23 a0 a24
+r s7 a22 a17
+r s7 a8 a24 a22 a14 a10 a12 a2 a27
+r s7 a2
+r s7 a27 a29 a21 a12
+r s7 a21 a29 a18 a12
+r s7 a19 a18 a13 a29 a25
+r s8 a11 a1 a5 a17 a27 a6 a22
+r s8 a21
+r s8 a9 a7 a11 a6
+r s8 a12 a26 a7 a1
+r s8 a16 a1 a3 a0 a26 a17 a19 a29
+r s8 a18 a11
+r s9 a4 a14 a24 a12
+r s9 a7 a0 a3
+r s9 a3 a18 a19 a13
+r s9 a12 a13 a3 a0
+r s9 a12 a3 a10
+r s10 a17 a4 a18 a22 a7
+r s10 a7 a1 a2 a8
+r s10 a22 a8 a26 a20 a25 a2 a15 a29
+r s10 a4 a10 a7 a0 a23 a6
+r s10 a20 a4 a9 a18 a21 a14 a27 a15
+r s10 a9 a24 a23 a17 a15 a26 a19 a13
+r s11 a6 a19
+r s11 a19 a23 a0
+r s11 a25 a28
+r s11 a28 a24
+r s11 a6 a19 a25 a23
+r s11 a8
+r s11 a15 a14 a13
+r s12 a10 a14
+r s12 a22 a8 a15 a4 a3 a10 a11 a24
+r s12 a3 a25 a12 a22 a14 a10
+r s12 a26 a25 a6 a7 a14
+r s12 a11 a9 a13
+r s13 a16 a20 a1 a5 a9
+r s13 a25 a4 a6
+r s13 a5 a22 a20
+r s13 a8 a28 a15 a12
+r s14 a26 a28 a3 a23 a16
+r s14 a4 a3 a26 a13 a9 a16
+r s14 a3 a4 a18 a22 a16
+r s15 a12
+r s15 a20 a14 a17 a15 a27 a29 a3 a0
+r s15 a15 a26 a2 a9 a3 a21 a23 a6
+r s15 a22 a2 a21 a27 a17 a13 a15 a4
+r s15 a11 a0 a2
+r s15 a10 a29 a1 a2 a28
+r s15 a5 a0 a20 a11 a6 a10
+r s16 a14 a1 a0 a20 a22 a2 a7
+r s16 a29 a6
+r s17 a1 a24 a12 a28
+r s17 a3 a9
+r s17 a2
+r s17 a8 a12 a19 a5
+r s18 a15 a25 a18 a13 a20 a22
+r s18 a21 a10 a14 a11 a18 a23 a6
+r s18 a13 a20 a26 a15 a0 a16 a4 a14
+r s19 a24 a27 a3
+r s20 a2 a14 a3 a27 a0 a20 a8 a22
+r s20 a7 a15 a24 a0 a29 a10 a11
+r s21 a2 a4 a0 a16 a19 a29 a20
+r s21 a27 a13
+r s22 a6 a23
+r s23 a25 a16 a0 a11 a22 a18 a10
+r s23 a9 a21 a13 a17 a0 a14
+r s24 a19
+r s24 a1
+r s25 a8 a29 a27 a17 a9 a0 a11
+r s26 a1 a3 a20 a12 a9
+r s26 a24 a10 a2 a11 a1
+r s26 a17 a3 a13 a10
+r s26 a18 a14 a9 a3 a15 a11
+r s26 a28 a3 a14
+r s26 a13 a15 a5 a7 a21 a19 a23
+r s26 a8 a15 a20 a13 a3
+r s26 a10 a9 a3 a25 a19 a16
+r s27 a23 a8 a24 a26 a21 a12 a27 a1
+r s27 a20
+r s27 a5
+r s27 a6 a23 a11 a27 a19
+r s27 a4 a16 a19 a28 a14 a13
+r s27 a8
+r s27 a17 a10 a9 a19
+r s27 a18
+r s28 a9
+r s28 a28 a3 a14
+r s28 a8 a4 a20 a7 a0 a21
+r s29 a8 a5 a18 a14 a16
+r s29 a29

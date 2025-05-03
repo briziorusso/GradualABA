@@ -1,0 +1,48 @@
+p aba 20
+a a0
+a a1
+a a2
+a a3
+a a4
+a a5
+a a6
+a a7
+a a8
+a a9
+c a0 s0
+c a1 s1
+c a2 s2
+c a3 s3
+c a4 s4
+c a5 s5
+c a6 s6
+c a7 s7
+c a8 s8
+c a9 s9
+r s0 a4 a1 a9 a2 a0 a5 a3 a7
+r s0 a4 a1
+r s0 a0 a1 a2 a7 a5
+r s0 a3 a6 a1
+r s1 a0 a9 a2
+r s1 a4 a5 a8 a0 a3 a6
+r s1 a5
+r s1 a6 a8 a4 a7 a5 a0
+r s2 a3 a5 a2 a8 a0 a1
+r s2 a9 a6 a4 a1 a3 a5 a7 a0
+r s2 a8 a1 a6 a0 a4 a5 a7 a2
+r s2 a5 a4 a2 a1 a0
+r s3 a6
+r s3 a0 a5
+r s3 a7 a9 a3 a2 a6
+r s4 a7 a0 a2 a8
+r s4 a7 a1 a2 a4 a8
+r s5 a1 a2
+r s6 a1 a7 a6
+r s6 a6 a9 a8 a1 a5
+r s6 a1
+r s6 a9 a6 a3 a2 a8 a7
+r s7 a8 a9 a0 a5 a3 a4 a7
+r s7 a9 a0 a3 a4 a1 a5 a8 a7
+r s8 a9 a4 a5 a3 a8 a6
+r s9 a7 a6 a0 a3 a1 a8 a9
+r a4 a4 a1 a2 a3 a7 a8

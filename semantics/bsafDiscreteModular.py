@@ -54,6 +54,61 @@ class DiscreteModular:
         conv_map = self.has_converged(epsilon, last_n)
         return all(conv_map.values())
 
+    def convergence_time(self, epsilon: float, consecutive: int, out_mean: bool = False) -> dict:
+        """
+        For each assumption, scan its series in self.graph_data (a dict
+        of name->[ (t, strength), … ]) and return the first time t at which
+        the strength has changed by ≤ epsilon for `consecutive` successive steps.
+        If an assumption never satisfies that, its value is None.
+
+        :param epsilon: non-negative tolerance
+        :param consecutive: how many consecutive small-change steps to require (>=1)
+        :return: dict mapping assumption_name -> time_of_convergence (or None)
+        """
+        # 1) sanity checks
+        if not isinstance(epsilon, (int, float)) or epsilon < 0:
+            raise ValueError("epsilon must be a non-negative number")
+        if not isinstance(consecutive, int) or consecutive < 1:
+            raise ValueError("consecutive must be an integer ≥ 1")
+        if not getattr(self, "graph_data", None):
+            raise RuntimeError("No graph_data—run solve(..., generate_plot=True) first")
+
+        times = {}
+        for name, seq in self.graph_data.items():
+            # need at least (consecutive+1) points to get `consecutive` diffs
+            if len(seq) < consecutive + 1:
+                times[name] = None
+                continue
+
+            # precompute absolute diffs between successive strength values
+            diffs = [abs(seq[i][1] - seq[i-1][1]) for i in range(1, len(seq))]
+
+            found = None
+            # scan windows of length `consecutive`
+            for start in range(0, len(diffs) - consecutive + 1):
+                window = diffs[start : start + consecutive]
+                if all(d <= epsilon for d in window):
+                    # we take the time‐stamp at the *end* of that window:
+                    # that's seq[start + consecutive][0]
+                    found = seq[start + consecutive][0]
+                    break
+
+            times[name] = found
+        
+        # if out_mean is True, return the mean of the times
+        if out_mean:
+            mean_times = []
+            for name, time in times.items():
+                if time is not None:
+                    mean_times.append(time)
+            if len(mean_times) > 0:
+                return sum(mean_times) / len(mean_times)
+            else:
+                return None
+
+        return times
+
+
     def iterate(self, state):
 
         # computes the next state

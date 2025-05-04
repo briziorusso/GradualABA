@@ -20,8 +20,7 @@ from semantics.modular.QuadraticMaximumInfluence import QuadraticMaximumInfluenc
 
 # ─── Config ──────────────────────────────────────────────────────────────
 INPUT_DIR       = Path("data_generation/abaf/").resolve()
-# OUTPUT_PKL      = "convergence_results_to10m_nf_atm_e2_d5_s50_mt200_setprod.pkl"
-OUTPUT_PKL      = Path("convergence_results_to10m_nf_atm_e2_d5_s50_mt200.pkl")
+OUTPUT_PKL      = Path("convergence_results_to10m_nf_atm_e2_d5_s200.pkl")
 CACHE_DIR       = Path(INPUT_DIR,"bsaf_frameworks")
 CACHE_OVERRIDE  = False # set to True to override existing cache files
 RESULT_OVERRIDE = False # set to True to override existing results
@@ -261,7 +260,6 @@ def run_file_with_timeout(aba_path, params, runs, timeout):
 
 
 if __name__ == "__main__":
-    results = []
     for aba_path in tqdm(aba_paths, desc="Files", unit="file"):
         # skip if we've already run this file
         if should_skip(aba_path):

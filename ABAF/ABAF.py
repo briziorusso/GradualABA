@@ -13,6 +13,7 @@ from tqdm import tqdm
 import itertools
 import clingo
 import os, time
+import random
 # ASP encoding for argument generation
 ASP_ENCODING = """
     {in(X) : assumption(X)}.
@@ -23,8 +24,12 @@ ASP_ENCODING = """
     #show derived/1.
     """
 
+def my_weight():
+    return random.random() if random.random() < 0.1 else 0.2
+
 class ABAF:
-    def __init__(self, sentences=None, assumptions=None, rules=None, debug=False, arg_mode="basic", path=None):
+    def __init__(self, sentences=None, assumptions=None, rules=None, debug=False, arg_mode="basic", path=None,
+        default_weight: float = DEFAULT_WEIGHT, weight_fn = None, seed=42):
         """
         Assumption-based Argumentation Framework:
         - assumptions: iterable of Assumption instances
@@ -49,6 +54,10 @@ class ABAF:
         self.asmpt_to_singleton = dict()     # includes _the_ argument for singleton assumption set
         self.singleton_asp_atom = clingo.Function("singleton")
 
+        self.default_weight = default_weight
+        self.weight_fn      = weight_fn
+        self.seed = seed
+
         if path:
             self._load_from_file(path)
 
@@ -58,7 +67,11 @@ class ABAF:
         # --- Flatness check: no assumption may appear as the head of a rule ---
         assump_names = {a.name for a in self.assumptions}
         self.non_flat = any([rule.head.name in assump_names for rule in self.rules])
+
     def _load_from_file(self, path):
+
+        random.seed(self.seed)
+
         with open(path, "r") as f:
             text = f.read().split("\n")
         self.arguments.clear()
@@ -123,18 +136,21 @@ class ABAF:
 
                 rule_index += 1
 
-        # create assumptions
+        # create assumptions with the new weighting scheme:
         self.assumptions = set()
-        for asmpt in assumptions:
+        for asmpt in sorted(assumptions):
+            w = (self.weight_fn() if self.weight_fn is not None else self.default_weight)
             if asmpt in contraries:
                 c = contraries[asmpt][0]
-                assumption = Assumption(asmpt, contrary=c, initial_weight=DEFAULT_WEIGHT)
+                assumption = Assumption(asmpt, contrary=c, initial_weight=w)
             else:
-                assumption = Assumption(asmpt)
+                assumption = Assumption(asmpt, initial_weight=w)
             self.assumptions.add(assumption)
-            # self.sentences.add(assumption)
-        for sent in sentences:
-            sent = Sentence(sent, initial_weight=DEFAULT_WEIGHT)
+
+        # create sentences with the same scheme:
+        for sent_name in sorted(sentences):
+            w = (self.weight_fn() if self.weight_fn is not None else self.default_weight)
+            sent = Sentence(sent_name, initial_weight=w)
             self.sentences.add(sent)
 
         # create rules
@@ -147,7 +163,8 @@ class ABAF:
             elif head in [s.name for s in self.sentences]:
                 head_sent = next(s for s in self.sentences if s.name == head)
             else:
-                head_sent = Sentence(head, initial_weight=DEFAULT_WEIGHT)
+                w = self.weight_fn() if self.weight_fn is not None else self.default_weight
+                head_sent = Sentence(head, initial_weight=w)
                 self.sentences.add(head_sent)
 
             if body:
@@ -158,8 +175,11 @@ class ABAF:
                     elif b in [s.name for s in self.sentences]:
                         body_sent.append(next(s for s in self.sentences if s.name == b))
                     else:
-                        body_sent.append(Sentence(b, initial_weight=DEFAULT_WEIGHT))
-                        self.sentences.add(body_sent[-1])
+                        # new sentence: pick its weight via weight_fn or default_weight
+                        w = self.weight_fn() if self.weight_fn is not None else self.default_weight
+                        new_sent = Sentence(b, initial_weight=w)
+                        body_sent.append(new_sent)
+                        self.sentences.add(new_sent)
             else:
                 body_sent = []
 

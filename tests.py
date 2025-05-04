@@ -1,6 +1,7 @@
 import unittest
 import os, sys
 import re
+import random
 import pickle
 from pathlib import Path
 from tqdm import tqdm
@@ -320,8 +321,7 @@ class TestABAF(unittest.TestCase):
 
             
             ## build the arguments
-            # abaf.build_arguments_procedure(SetProductAggregation())
-            abaf.build_arguments_procedure_dict(SetProductAggregation())
+            abaf.build_arguments_procedure(SetProductAggregation())
 
             ## Format the arguments
             args_claims2 = set()
@@ -384,17 +384,18 @@ class TestABAF(unittest.TestCase):
         ### Catch that the ABAF errors because of multiple contraries
         abaf = ABAF(path=iccma_file)
         print(f"ABAF non flat: {abaf.non_flat}")
-        abaf.build_arguments_procedure_dict(SetProductAggregation())
+        abaf.build_arguments_procedure(SetProductAggregation())
 
         print(abaf)
         self.assertFalse(abaf.non_flat, "Expected the ABAF to be flat, but it was not.")
         
-        iccma_file = "data_generation/abaf/nf_atm_s60_n0.2_a0.5_r8_b8_9.aba"
+        ### Non flat example
+        iccma_file = "data_generation/abaf/nf_atm_s20_n0.1_a0.5_r2_b16_0.aba"
         
-        ### Catch that the ABAF errors because of multiple contraries
+        ## Catch that the ABAF errors because of multiple contraries
         abaf = ABAF(path=iccma_file)
         print(f"ABAF non flat: {abaf.non_flat}")
-        abaf.build_arguments_procedure_dict(SetProductAggregation())
+        abaf.build_arguments_procedure(SetProductAggregation())
 
         print(abaf)
 
@@ -437,12 +438,14 @@ class TestABAF(unittest.TestCase):
         """
         # ─── Config ──────────────────────────────────────────────────────────────
         INPUT_DIR       = Path("data_generation/abaf/").resolve()
-        OUTPUT_PKL      = "convergence_results_to10m_nf_atm.pkl"
         MAX_FILES       = 0       # 0 = no limit
         MIN_SENTENCES   = 0
         MAX_SENTENCES   = 100
-        TIMEOUT_SECONDS = 600      # per‐file timeout
-
+        BASE_SCORES     = "random"
+        MAX_STEPS       = 20
+        EPSILON         = 1e-3
+        DELTA           = 5
+        
         pattern_s = re.compile(r"_s(\d+)_")
         all_aba   = sorted(INPUT_DIR.glob("*.aba"))
         aba_paths = [
@@ -452,14 +455,6 @@ class TestABAF(unittest.TestCase):
         ]
         if MAX_FILES > 0:
             aba_paths = aba_paths[:MAX_FILES]
-
-        param_pat = re.compile(
-            r"_s(?P<s>\d+)_"
-            r"n(?P<n>[\d.]+)_"
-            r"a(?P<a>[\d.]+)_"
-            r"r(?P<r>\d+)_"
-            r"b(?P<b>\d+)"
-        )
 
         RUNS = [
             ("DF-QuAD", dict(
@@ -476,22 +471,10 @@ class TestABAF(unittest.TestCase):
 
         aba_path = "data_generation/abaf/nf_atm_s20_n0.01_a0.5_r2_b16_0.aba"
 
-        entries = []
         # 1) load & build BSAF (heavy!)
         abaf = ABAF(path=str(aba_path))
         print(f"Loaded {aba_path.split('/')[-1]}. Flat: {not abaf.non_flat}")
         bsaf = abaf.to_bsaf()  # this sets abaf.non_flat, but we trust disk flag
-
-        # 2) compute size‐stats
-        num_assumptions = len(abaf.assumptions)
-        num_rules       = len(abaf.rules)
-        num_sentences   = len(abaf.sentences)
-
-        # 3) initial strengths
-        initial_strengths = {
-            a.name: a.initial_weight
-            for a in bsaf.assumptions
-        }
 
         # 4) for each model configuration
         for model_name, cfg in RUNS:
@@ -506,13 +489,94 @@ class TestABAF(unittest.TestCase):
             final_state = model.solve(20, generate_plot=True, verbose=False)
 
             # record final strengths & convergence
-            final_strengths = {a.name: final_state[a] for a in model.assumptions}
-            per_arg         = model.has_converged(epsilon=1e-3, last_n=5)
-            global_conv     = model.is_globally_converged(epsilon=1e-3, last_n=5)
+            per_arg         = model.has_converged(epsilon=EPSILON, last_n=DELTA)
+            global_conv     = model.is_globally_converged(epsilon=EPSILON, last_n=DELTA)
+            conv_time       = model.convergence_time(epsilon=EPSILON, consecutive=DELTA, out_mean=True)
             total           = len(per_arg)
             prop_conv       = (sum(per_arg.values()) / total) if total else 0.0
         
-            print(f"Model: {model_name}, Global Convergence: {global_conv}, Proportion Converged: {prop_conv}")
+            print(f"Model: {model_name}, Global Convergence: {global_conv}, Proportion Converged: {prop_conv}, Convergence Time: {conv_time}")
+
+
+        self.assertTrue(global_conv, f"Expected global convergence for {model_name}, but it was not converged.")
+
+    def test_convergence_random_weight(self):
+        """
+        Test the convergence of a single file with random weights.
+        """
+        # ─── Config ──────────────────────────────────────────────────────────────
+        INPUT_DIR       = Path("data_generation/abaf/").resolve()
+        MAX_FILES       = 0       # 0 = no limit
+        MIN_SENTENCES   = 0
+        MAX_SENTENCES   = 100
+        BASE_SCORES     = "random"
+        MAX_STEPS       = 20
+        EPSILON         = 1e-3
+        DELTA           = 5
+        SEED           = 42
+
+        random.seed(SEED)
+
+        pattern_s = re.compile(r"_s(\d+)_")
+        all_aba   = sorted(INPUT_DIR.glob("*.aba"))
+        aba_paths = [
+            p for p in all_aba
+            if (m := pattern_s.search(p.name))
+            and MIN_SENTENCES <= int(m.group(1)) <= MAX_SENTENCES
+        ]
+        if MAX_FILES > 0:
+            aba_paths = aba_paths[:MAX_FILES]
+
+        RUNS = [
+            ("DF-QuAD", dict(
+                aggregation     = ProductAggregation(),
+                influence       = LinearInfluence(conservativeness=1),
+                set_aggregation = SetProductAggregation()
+            )),
+            ("QE",      dict(
+                aggregation     = SumAggregation(),
+                influence       = QuadraticMaximumInfluence(conservativeness=1),
+                set_aggregation = SetProductAggregation()
+            ))
+        ]
+
+        aba_path = "data_generation/abaf/nf_atm_s20_n0.01_a0.5_r2_b16_0.aba"
+
+        abaf = ABAF(path=str(aba_path), 
+                    weight_fn=lambda: round(random.uniform(0.0, 1.0),3) if BASE_SCORES == "random" else None)
+        print(f"Loaded {aba_path.split('/')[-1]}. Flat: {not abaf.non_flat}")
+        bsaf = abaf.to_bsaf()  # this sets abaf.non_flat, but we trust disk flag
+
+        # 4) for each model configuration
+        for model_name, cfg in RUNS:
+
+            # build & solve
+            model       = DiscreteModular(
+                            BSAF=bsaf,
+                            aggregation=cfg["aggregation"],
+                            influence=cfg["influence"],
+                            set_aggregation=cfg["set_aggregation"]
+                        )
+            final_state = model.solve(MAX_STEPS, generate_plot=True, verbose=False)
+
+            # record final strengths & convergence
+            per_arg         = model.has_converged(epsilon=EPSILON, last_n=DELTA)
+            global_conv     = model.is_globally_converged(epsilon=EPSILON, last_n=DELTA)
+            conv_time       = model.convergence_time(epsilon=EPSILON, consecutive=DELTA, out_mean=True)
+            total           = len(per_arg)
+            prop_conv       = (sum(per_arg.values()) / total) if total else 0.0
+        
+            print(f"Model: {model_name}, Global Convergence: {global_conv}, Proportion Converged: {prop_conv}, Convergence Time: {conv_time}")
+
+        ### extract initial and final strengths
+        initial_strengths = {a.name: a.initial_weight for a in model.assumptions}
+        final_strengths   = {a.name: final_state[a] for a in model.assumptions}
+        print(f"Initial strengths: {initial_strengths}")
+        print(f"Final strengths: {final_strengths}")
+
+        expected_initial_strengths = {'a8': 0.422, 'a3': 0.223, 'a0': 0.639, 'a2': 0.275, 'a5': 0.677, 'a7': 0.087, 'a4': 0.736, 'a9': 0.03, 'a1': 0.025, 'a6': 0.892}
+
+        self.assertEqual(initial_strengths, expected_initial_strengths, f"Expected initial strengths: {expected_initial_strengths}, but got: {initial_strengths}")
 
     def rerun_unfinished_flat(self):
         """
@@ -611,9 +675,10 @@ class TestABAF(unittest.TestCase):
 # TestABAF().test_argument_compare()
 # TestABAF().test_argument_compare2()
 # TestABAF().test_abaf_flatness()
+TestABAF().test_convergence_single_file()
+TestABAF().test_convergence_random_weight()
 # TestABAF().argument_creation_speed_test()
-# TestABAF().test_convergence_single_file()
-TestABAF().rerun_unfinished_flat()
+# TestABAF().rerun_unfinished_flat()
 
 print("All tests passed.")
 

@@ -34,6 +34,12 @@ class Sentence:
 
             self.initialized = True
 
+    def __reduce__(self):
+        return (
+            self.__class__,
+            (self.name, self.initial_weight)
+        )
+
     def __str__(self):
         return f"Sentence({self.name}, initial_weight={self.initial_weight})"
 

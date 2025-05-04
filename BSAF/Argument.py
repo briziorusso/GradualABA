@@ -78,6 +78,17 @@ class Argument:
             return False
         return self.claim == other.claim and set(self.premise) == set(other.premise)
 
+    def __reduce__(self):
+        ## To pickle the object, we need to provide a callable and its arguments
+        return (
+            self.__class__,
+            (self.name,
+             self.initial_weight,
+             self.strength,
+             list(self.premise),
+             self.claim)
+        )
+
     def __reset__(self):
         self.strength = self.initial_weight
         self.attackers.clear()

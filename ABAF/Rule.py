@@ -28,6 +28,16 @@ class Rule:
         # Register the identifier as used
         Rule._used_identifiers.add(name)
 
+    def __reduce__(self):
+        """
+        Tell pickle that to re-create this Rule, it should call
+        Rule(head, body, name) with these three arguments.
+        """
+        return (
+            self.__class__,
+            (self.head, list(self.body), self.name)
+        )
+
     def __repr__(self):
         body_str = ", ".join([str(sentence.name) for sentence in self.body]) if self.body else ""
         if body_str:

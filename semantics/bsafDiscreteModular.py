@@ -4,6 +4,7 @@ class DiscreteModular:
     def __init__(self, BSAF=None, aggregation=None, influence=None, set_aggregation=None):
         self.graph_data = defaultdict(list)
         self.BSAF = BSAF
+        self.BAG = None
         self.aggregation = aggregation
         self.influence = influence
         self.set_aggregation = set_aggregation
@@ -114,25 +115,33 @@ class DiscreteModular:
         # computes the next state
         next_state = {}
 
-        # aggregate the set-attacks and set-supports using set_aggregation
-        aggregated_setAttacks = {asm: [] for asm in self.assumptions}
-        aggregated_setSupports = {asm: [] for asm in self.assumptions}    
+        if self.BSAF is not None:
+            # aggregate the set-attacks and set-supports using set_aggregation
+            aggregated_setAttacks = {asm: [] for asm in self.assumptions}
+            aggregated_setSupports = {asm: [] for asm in self.assumptions}    
 
-        for assumption in self.assumptions:
-            att_aggregation = []
-            for attack in self.setAttacks[assumption]:
-                set_aggregation = self.set_aggregation.aggregate_set(attack, state)
-                att_aggregation.append(set_aggregation)
-            aggregated_setAttacks[assumption] = att_aggregation
+            for assumption in self.assumptions:
+                att_aggregation = []
+                for attack in self.setAttacks[assumption]:
+                    set_aggregation = self.set_aggregation.aggregate_set(attack, state)
+                    att_aggregation.append(set_aggregation)
+                aggregated_setAttacks[assumption] = att_aggregation
 
-            sup_aggregation = []
-            for support in self.setSupports[assumption]:
-                set_aggregation = self.set_aggregation.aggregate_set(support, state)
-                sup_aggregation.append(set_aggregation)
-            aggregated_setSupports[assumption] = sup_aggregation
-
+                sup_aggregation = []
+                for support in self.setSupports[assumption]:
+                    set_aggregation = self.set_aggregation.aggregate_set(support, state)
+                    sup_aggregation.append(set_aggregation)
+                aggregated_setSupports[assumption] = sup_aggregation
+        elif self.BAG is not None:
+            # set aggregation is not needed
+            aggregated_setAttacks = self.setAttacks
+            aggregated_setSupports = self.setSupports
+        else:
+            # if no BSAF or BAG is attached, we cannot compute the next state
+            raise AttributeError("Model does not have BSAF or BAG attached")
+            
         # compute the next state
-        for a in self.assumptions:
+        for a in self.assumptions: ## These are arguments if BAG is not None
             aggregate_strength = self.aggregation.aggregate_strength(aggregated_setAttacks[a], aggregated_setSupports[a])
             result = self.influence.compute_strength(a.initial_weight, aggregate_strength)
 
@@ -150,8 +159,8 @@ class DiscreteModular:
         if (type(iterations) != int):
             raise TypeError("iterations must be a float or integer")
         
-        if self.BSAF is None:
-            raise AttributeError("Model does not have BAG attached")
+        if self.BSAF is None and self.BAG is None:
+            raise AttributeError("Model does not have BSAF or BAG attached")
         
         if verbose:
             print("\nDiscrete modular, iterations: ", iterations,"\n-------")
@@ -177,6 +186,10 @@ class DiscreteModular:
                 print(str(count) + "\t" + "\t ".join([f"{round(state[arg], 3)}" for arg in sorted(self.assumptions, key=lambda arg: arg.name)]))
             iterations -= 1
 
+        ## update strength values
+        for asm in self.assumptions:
+            asm.strength = state[asm]
+            
         return state
     
     def __repr__(self) -> str:

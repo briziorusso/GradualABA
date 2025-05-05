@@ -18,3 +18,9 @@ class Attack:
 
     def __str__(self) -> str:
         return f"Attack by {self.attacker} to {self.attacked} with weight {self.weight}"
+
+    def __reduce__(self):
+        return (
+            self.__class__,
+            (self.attacker, self.attacked, self.weight),
+        )

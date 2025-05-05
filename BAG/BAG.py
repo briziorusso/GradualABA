@@ -1,10 +1,9 @@
 import os
 import re
 import string
-from BAG.Argument import Argument
+from BSAF.Argument import Argument
 from .Support import Support
 from .Attack import Attack
-
 
 class BAG:
 
@@ -36,7 +35,7 @@ class BAG:
                 k_name = line.split('(')[0]
                 args = re.findall(rf"{k_name}\((.*?)\)", line)[0].replace(' ', '').split(',')
                 if k_name == 'arg':
-                    argument = Argument(args[0], float(args[1]))
+                    argument = Argument(name=args[0], initial_weight=float(args[1]))
                     self.arguments[argument.name] = argument
                 elif k_name == 'att':
                     attacker = self.arguments[args[0]]

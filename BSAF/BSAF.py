@@ -24,8 +24,10 @@ class BSAF:
         self.supports = {asm: set() for asm in self.assumptions}
         self.attacks  = {asm: set() for asm in self.assumptions}
         # print("Creating BSAF: Extracting relations from arguments...")
-        # Extract relations from arguments
+        # Extract relations from arguments if they are structured
         for arg in self.arguments:
+            if arg.claim is None:
+                continue
             coalition = frozenset(arg.premise)
             ## Filter assumption arguments ({a},a) and sets that contain a sentence that is not assumption (i.e. it can be derived)
             if (len(coalition) == 1 and arg.claim in [a.name for a in arg.premise]): # or not all(a for a in coalition if a in self.assumptions):

@@ -1,3 +1,6 @@
+from typing import Any
+
+
 class Support:
     def __init__(self, supporter, supported, weight=1) -> None:
         self.supporter = supporter
@@ -19,4 +22,10 @@ class Support:
     def __str__(self) -> str:
         return (
             f"Support by {self.supporter} to {self.supported} with weight {self.weight}"
+        )
+
+    def __reduce__(self):
+        return (
+            self.__class__,
+            (self.supporter, self.supported, self.weight),
         )

@@ -14,6 +14,7 @@ import itertools
 import clingo
 import os, time
 import random
+import hashlib
 # ASP encoding for argument generation
 ASP_ENCODING = """
     {in(X) : assumption(X)}.
@@ -26,6 +27,11 @@ ASP_ENCODING = """
 
 def my_weight():
     return random.random() if random.random() < 0.1 else 0.2
+
+def stable_hash(s:str) -> int:
+    h = hashlib.sha256(s.encode("utf8")).digest()
+    # take e.g. the first two bytes as an int 0..65535
+    return (h[0]<<8) | h[1]
 
 class ABAF:
     def __init__(self, sentences=None, assumptions=None, rules=None, debug=False, arg_mode="basic", path=None,
@@ -55,7 +61,7 @@ class ABAF:
         self.singleton_asp_atom = clingo.Function("singleton")
 
         self.default_weight = default_weight
-        self.weight_fn      = weight_fn
+        self.weight_fn      = weight_fn if weight_fn else None
         self.seed = seed
 
         if path:
@@ -139,7 +145,10 @@ class ABAF:
         # create assumptions with the new weighting scheme:
         self.assumptions = set()
         for asmpt in sorted(assumptions):
-            w = (self.weight_fn() if self.weight_fn is not None else self.default_weight)
+            ## make sure that the weight changes for each assumption
+            seed = self.seed + stable_hash(asmpt) % 1000
+            random.seed(seed)
+            w = self.weight_fn() if self.weight_fn is not None else self.default_weight
             if asmpt in contraries:
                 c = contraries[asmpt][0]
                 assumption = Assumption(asmpt, contrary=c, initial_weight=w)
@@ -149,7 +158,10 @@ class ABAF:
 
         # create sentences with the same scheme:
         for sent_name in sorted(sentences):
-            w = (self.weight_fn() if self.weight_fn is not None else self.default_weight)
+            ## make sure that the weight changes for each sentence
+            seed = self.seed + stable_hash(sent_name) % 1000
+            random.seed(seed)
+            w = self.weight_fn() if self.weight_fn is not None else self.default_weight
             sent = Sentence(sent_name, initial_weight=w)
             self.sentences.add(sent)
 
@@ -163,6 +175,9 @@ class ABAF:
             elif head in [s.name for s in self.sentences]:
                 head_sent = next(s for s in self.sentences if s.name == head)
             else:
+                # make sure that the weight changes for each sentence
+                seed = self.seed + stable_hash(head) % 1000
+                random.seed(seed)
                 w = self.weight_fn() if self.weight_fn is not None else self.default_weight
                 head_sent = Sentence(head, initial_weight=w)
                 self.sentences.add(head_sent)
@@ -175,7 +190,9 @@ class ABAF:
                     elif b in [s.name for s in self.sentences]:
                         body_sent.append(next(s for s in self.sentences if s.name == b))
                     else:
-                        # new sentence: pick its weight via weight_fn or default_weight
+                        # make sure that the weight changes for each sentence
+                        seed = self.seed + stable_hash(b) % 1000
+                        random.seed(seed)
                         w = self.weight_fn() if self.weight_fn is not None else self.default_weight
                         new_sent = Sentence(b, initial_weight=w)
                         body_sent.append(new_sent)
@@ -591,47 +608,70 @@ class ABAF:
         return argument_instances
 
 
-    def _build_bag(self, weight_agg):
+    def _build_bag(self, weight_agg, args=None):
         """
         Build a BAG from this ABAF, using argument-level head/body:
           - support: if arg1.head matches any element in arg2.body ⇒ Support(arg1→arg2)
           - attack: if arg1.head equals contrary of any element in arg2.body ⇒ Attack(arg1→arg2)
         """
-        args = self.build_arguments_procedure(weight_agg) if not self.arguments else self.arguments
+        if args is None:
+            args = self.build_arguments_procedure(weight_agg) if not self.arguments else self.arguments
         bag = BAG()
-        # register arguments
+
+        # alias methods and functions locally for speed
+        addsup = bag.add_support
+        addatk = bag.add_attack
+        agg_set = weight_agg.aggregate_set
+
+        # register arguments to ``
         for arg in args:
+            ## update initial weight and strength to be the weight_agg of the premises initial weights
+            arg.initial_weight = agg_set(state={asm.name: asm.initial_weight for asm in arg.premise}, 
+                                                          set=set(a.name for a in arg.premise))
+            arg.strength = arg.initial_weight
             bag.arguments[arg.name] = arg
-            bodylist = ",".join(premise.name for premise in arg.premise)
-            print(f"{arg.name}: ([{bodylist}],{arg.claim})")
-        print("Creting BAF: Extracting relations between arguments...")
-        # build supports and attacks between arguments
+            
+            if self.debug:
+                premiselist = ",".join(premise.name for premise in arg.premise)
+                print(f"{arg.name}: ([{premiselist}],{arg.claim})")
+
+        if self.debug:
+            print("Creating BAF: Extracting relations between arguments...")
+        premise_map = defaultdict(list)
+        contrary_map = defaultdict(set)
+        for arg in args:
+            for asm in arg.premise:
+                premise_map[asm.name].append(arg)
+                if hasattr(asm, "contrary"):
+                    contrary_map[asm.contrary].add(asm)
+        
+
+        # 3) now only iterate the truly necessary pairs
         for a1 in args:
-            for a2 in args:
-                # skip self
-                if a1 is a2:
-                    continue
-                # support: a1.head in names of a2.body
-                if any(a1.head == premise.name for premise in a2.body):
-                    bag.add_support(a1, a2)
-                    if self.debug:
-                        print(f"Support: {a1.name} -> {a2.name} ({a1.head} in {a2.body})")
-                # attack: a2.body contains assumption with contrary == a1.head OR the contrary of a1.head is in a2.body
-                if any(hasattr(premise, 'contrary') and premise.contrary == a1.head for premise in a2.body):
-                    bag.add_attack(a1, a2)
-                    if self.debug:
-                        print(f"Attack: {a1.name} -> {a2.name} ({a1.head} = contrary of {a2.body})")
-                elif any(hasattr(a1.head, 'contrary') and a1.head.contrary == premise for premise in a2.body):
-                    bag.add_attack(a1, a2)
-                    if self.debug:
-                        print(f"Attack: {a1.name} -> {a2.name} ({a1.contrary} in {a2.body})")
+            claim_name = a1.claim.name
+
+            # a1 supports every a2 whose premise contains claim_name
+            for a2 in premise_map.get(claim_name, ()):
+                if a2 is not a1:
+                    addsup(a1, a2)
+
+            # a1 attacks every a2 whose premise is the contrary of a1.claim, if any
+            c = contrary_map.get(claim_name, None) 
+            if c:
+                if len(c) > 1:
+                    raise ValueError(f"Multiple contraries for {claim_name}: {c}")
+                c = next(iter(c))
+                for a2 in premise_map.get(c.name, ()):
+                    if a2 is not a1:
+                        addatk(a1, a2)
         return bag
 
-    def to_bag(self, weight_agg=SetProductAggregation()):
-        return self._build_bag(weight_agg)
+    def to_bag(self, weight_agg=SetProductAggregation(), args=None):
+        return self._build_bag(weight_agg, args)
 
-    def to_bsaf(self, weight_agg=SetProductAggregation()):
-        args = self.build_arguments_procedure(weight_agg) if not self.arguments else self.arguments
+    def to_bsaf(self, weight_agg=SetProductAggregation(), args=None):
+        if args is None:
+            args = self.build_arguments_procedure(weight_agg) if not self.arguments else self.arguments
         bsaf = BSAF(arguments=args, assumptions=self.assumptions)
         return bsaf
 

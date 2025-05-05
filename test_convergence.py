@@ -10,18 +10,23 @@ import sys
 sys.path.append("../")
 
 from ABAF import ABAF
+from ABAF.Assumption import Assumption
+from BSAF.Argument import Argument
+
 from semantics.bsafDiscreteModular import DiscreteModular
+from semantics.DiscreteModularModel import DiscreteModularBAG
 from semantics.modular.ProductAggregation    import ProductAggregation
 from semantics.modular.SetProductAggregation import SetProductAggregation
 from semantics.modular.SetMinAggregation     import SetMinAggregation
+from semantics.modular.SetMeanAggregation    import SetMeanAggregation
 from semantics.modular.SumAggregation        import SumAggregation
 from semantics.modular.LinearInfluence       import LinearInfluence
 from semantics.modular.QuadraticMaximumInfluence import QuadraticMaximumInfluence
 
 # ─── Config ──────────────────────────────────────────────────────────────
 INPUT_DIR       = Path("data_generation/abaf/").resolve()
-OUTPUT_PKL      = Path("convergence_results_to10m_nf_atm_e2_d5_s200.pkl")
 CACHE_DIR       = Path(INPUT_DIR,"bsaf_frameworks")
+CACHE_DIR_BAG   = Path(INPUT_DIR,"bag_frameworks")
 CACHE_OVERRIDE  = False # set to True to override existing cache files
 RESULT_OVERRIDE = False # set to True to override existing results
 
@@ -32,15 +37,26 @@ MAX_SENTENCES   = 100
 TIMEOUT_SECONDS = 600     # per‐file timeout
 EPSILON         = 1e-3    # convergence epsilon
 DELTA           = 5       # convergence delta
-MAX_STEPS       = 200      # max steps for convergence
-BASE_SCORES     = '' # 'random' or '' (empty==DEFAULT_WEIGHTS)
-SET_AGGREGATION = SetProductAggregation() # SetProductAggregation() or SetMinAggregation()
+MAX_STEPS       = 5000    # max steps for convergence
+BASE_SCORES     = 'random' # 'random' or '' (empty==DEFAULT_WEIGHTS)
+SET_AGGREGATION = SetMinAggregation() # SetProductAggregation() or SetMinAggregation()
+ASM_AGGREGATION  = SetMeanAggregation() # SetMinAggregation() or SetMeanAggregation()
 # ────────────────────────────────────────────────────────────────────────
+
+## combine parameters into out name for the output file
+set_agg_name = 'prod' if isinstance(SET_AGGREGATION, SetProductAggregation) else 'min'
+asm_agg_name = 'mean' if isinstance(ASM_AGGREGATION, SetMeanAggregation) else 'min'
+base_init = '_randinitall' if BASE_SCORES == 'random' else ''
+
+out_name = f"convergence_results_to{TIMEOUT_SECONDS / 60}m_nf_atm_e{str(EPSILON)[-1]}_d{DELTA}_s{MAX_STEPS}{BASE_SCORES}_{set_agg_name}_{asm_agg_name}.pkl"
+
+OUTPUT_PKL = Path(out_name)
 
 TIMEOUT_RECORD  = CACHE_DIR / f"timed_out_{TIMEOUT_SECONDS}s.txt"
 TIMEOUT_RECORD.touch(exist_ok=True)
 CACHE_DIR.mkdir(exist_ok=True)
-random.seed(SEED)
+CACHE_DIR_BAG.mkdir(exist_ok=True)
+# random.seed(SEED)
 
 # ─── 0) LOAD the set of already‐timed‐out stems ─────────────────────────
 with open(TIMEOUT_RECORD, "r") as f:
@@ -76,17 +92,54 @@ param_pat = re.compile(
     r"b(?P<b>\d+)"
 )
 
-RUNS = [
-    ("DF-QuAD", dict(
-        aggregation     = ProductAggregation(),
-        influence       = LinearInfluence(conservativeness=1),
-        set_aggregation = SET_AGGREGATION
+# RUNS = [
+#     ("DF-QuAD", dict(
+#         aggregation     = ProductAggregation(),
+#         influence       = LinearInfluence(conservativeness=1),
+#         set_aggregation = SET_AGGREGATION
+#     )),
+#     ("QE", dict(
+#         aggregation     = SumAggregation(),
+#         influence       = QuadraticMaximumInfluence(conservativeness=1),
+#         set_aggregation = SET_AGGREGATION
+#     )),
+# ]
+
+BSAF_RUNS = [
+    # ("DF-QuAD (BSAF)", dict(
+    #     klass        = DiscreteModular,
+    #     aggregation  = ProductAggregation(),
+    #     influence    = LinearInfluence(conservativeness=1),
+    #     set_aggregation = SET_AGGREGATION
+    # )),
+    # ("QE      (BSAF)", dict(
+    #     klass        = DiscreteModular,
+    #     aggregation  = SumAggregation(),
+    #     influence    = QuadraticMaximumInfluence(conservativeness=1),
+    #     set_aggregation = SET_AGGREGATION
+    # )),
+]
+
+BAG_RUNS = [
+    ("DF-QuAD (BAF)", dict(
+        klass        = DiscreteModularBAG,
+        aggregation  = ProductAggregation(),
+        influence    = LinearInfluence(conservativeness=1),
+        set_aggregation = SET_AGGREGATION,
+        ams_aggregation = ASM_AGGREGATION
     )),
-    ("QE", dict(
-        aggregation     = SumAggregation(),
-        influence       = QuadraticMaximumInfluence(conservativeness=1),
-        set_aggregation = SET_AGGREGATION
+    ("QE      (BAF)", dict(
+        klass        = DiscreteModularBAG,
+        aggregation  = SumAggregation(),
+        influence    = QuadraticMaximumInfluence(conservativeness=1),
+        set_aggregation = SET_AGGREGATION,
+        ams_aggregation = ASM_AGGREGATION
     )),
+]
+
+ALL_RUNS = [
+    *BSAF_RUNS,
+    *BAG_RUNS,
 ]
 
 
@@ -109,6 +162,10 @@ def load_or_build_bsaf(aba_path: Path):
     Caches ABAF.to_bsaf() on disk under bsaf_cache/<stem>.bsaf.pkl.
     If CACHE_OVERRIDE is True, always rebuild (even if the cache file exists).
     """
+
+    Argument.reset_identifiers()  # reset the identifiers for the next run
+    Assumption.reset_identifiers()  # reset the identifiers for the next run
+
     cache_file = CACHE_DIR / (aba_path.stem + f"{BASE_SCORES}.bsaf.pkl")
 
     # if cache exists and we're not overriding, just load
@@ -129,6 +186,42 @@ def load_or_build_bsaf(aba_path: Path):
     with open(cache_file, "wb") as f:
         pickle.dump(bsaf, f)
     return bsaf
+
+def load_or_build_bag(aba_path: Path, weight_agg, args=None, abaf=None):
+    """
+    Caches ABAF.to_baf() on disk under bsaf_cache/<stem>.bsaf.pkl.
+    If CACHE_OVERRIDE is True, always rebuild (even if the cache file exists).
+    """
+
+    Argument.reset_identifiers()  # reset the identifiers for the next run
+    Assumption.reset_identifiers()  # reset the identifiers for the next run
+
+    cache_file = CACHE_DIR_BAG / (aba_path.stem + f"{BASE_SCORES}{weight_agg.name}.bag.pkl")
+
+    # if cache exists and we're not overriding, just load
+    if cache_file.exists() and not CACHE_OVERRIDE:
+        print(f"[CACHE HIT]   {aba_path.name}", flush=True)
+        with open(cache_file, "rb") as f:
+            return pickle.load(f)
+
+    # otherwise we're (re)building
+    if cache_file.exists() and CACHE_OVERRIDE:
+        print(f"[OVERRIDE]    {aba_path.name}  (rebuilding cache)", flush=True)
+    else:
+        print(f"[BUILDING]    {aba_path.name}", flush=True)
+    
+    # build & cache
+    if abaf is None:
+        abaf = ABAF(path=str(aba_path))
+    if args is None:
+        bag = abaf.to_bag(weight_agg=weight_agg)
+    elif args is not None and abaf is not None:
+        bag = abaf.to_bag(weight_agg=weight_agg, args=args)
+    else:
+        raise ValueError("Either args or abaf must be provided")
+    with open(cache_file, "wb") as f:
+        pickle.dump(bag, f)
+    return bag
 
 # 3) helper to decide whether to skip this file
 def should_skip(path: Path):
@@ -155,15 +248,22 @@ def worker_file(aba_path_str, params, runs, queue):
         # 1) load or build & cache the BSAF
         bsaf = load_or_build_bsaf(aba_path)
 
-        # 2) re-load ABAF only to count size-stats
+        # 2) re-load ABAF only to count size-stats and update the initial strengths
         abaf = ABAF(path=str(aba_path), 
-                    weight_fn=lambda: random.uniform(0.0, 1.0) if BASE_SCORES == "random" else None)
+                    weight_fn=(lambda: random.uniform(0.0, 1.0)) if BASE_SCORES == "random" else None)
         num_assumptions = len(abaf.assumptions)
         num_rules       = len(abaf.rules)
         num_sentences   = len(abaf.sentences)
 
         # 3) collect initial strengths
-        initial_strengths = { a.name: a.initial_weight for a in bsaf.assumptions }
+        initial_strengths = { a.name: a.initial_weight for a in abaf.assumptions}
+
+        ## update the initial strengths in the BSAF
+        for a in bsaf.assumptions:
+            if a.name in initial_strengths:
+                a.initial_weight = initial_strengths[a.name]
+            else:
+                raise ValueError(f"Assumption {a.name} not found in initial strengths")
 
         entries = []
         for model_name, cfg in runs:
@@ -186,13 +286,48 @@ def worker_file(aba_path_str, params, runs, queue):
             }
 
             # build & solve
-            model       = DiscreteModular(
-                            BSAF=bsaf,
-                            aggregation=cfg["aggregation"],
-                            influence=cfg["influence"],
-                            set_aggregation=cfg["set_aggregation"]
-                        )
-            final_state = model.solve(MAX_STEPS, generate_plot=True, verbose=False)
+            # model       = DiscreteModular(
+            #                 BSAF=bsaf,
+            #                 aggregation=cfg["aggregation"],
+            #                 influence=cfg["influence"],
+            #                 set_aggregation=cfg["set_aggregation"]
+            #             )
+            # final_state = model.solve(MAX_STEPS, generate_plot=True, verbose=False)
+
+            # # pick the right constructor and input
+            if cfg["klass"] is DiscreteModular:
+                # BSAF‐based
+                approach = "BSAF"
+                model = cfg["klass"](
+                    BSAF=bsaf,
+                    aggregation=cfg["aggregation"],
+                    influence=cfg["influence"],
+                    set_aggregation=cfg["set_aggregation"]
+                )
+                final_state = model.solve(
+                    MAX_STEPS,
+                    generate_plot=True,
+                    verbose=False
+                )
+            else:  # BAG‐based
+                approach = "BAF"
+                # bag = abaf.to_bag(weight_agg=cfg["set_aggregation"], args=bsaf.arguments)
+                bag = load_or_build_bag(Path(aba_path), weight_agg=cfg["set_aggregation"], args=bsaf.arguments, abaf=abaf)
+                print(bag)
+                model = cfg["klass"](
+                    bag=bag,
+                    aggregation=cfg["aggregation"],
+                    influence=cfg["influence"],
+                    set_aggregation=cfg["set_aggregation"]
+                )
+                final_state = model.solve(
+                    MAX_STEPS,
+                    generate_plot=True,
+                    verbose=False,
+                    view="Assumptions",
+                    assumptions=bsaf.assumptions,
+                    aggregate_strength_f=cfg["ams_aggregation"]                
+                )
 
             # record metrics
             final_strengths = {a.name: final_state[a] for a in model.assumptions}
@@ -277,7 +412,7 @@ if __name__ == "__main__":
 
         print(f"\n=== Running on {aba_path.name} ===", flush=True)
 
-        entries = run_file_with_timeout(aba_path, params, RUNS, TIMEOUT_SECONDS)
+        entries = run_file_with_timeout(aba_path, params, ALL_RUNS, TIMEOUT_SECONDS)
         results.extend(entries)
 
         # persist after each file

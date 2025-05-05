@@ -35,18 +35,32 @@ class Argument:
         inst.name = name
         return inst
 
-    def __init__(self, name=None, initial_weight=DEFAULT_WEIGHT, strength=None, premise=None, claim=None):
+    def __init__(self, name=None, initial_weight=DEFAULT_WEIGHT, strength=None, 
+                 premise=None, claim=None, attackers=None, supporters=None):
         if hasattr(self, '_initialized'):
             return
         if not isinstance(initial_weight, (int, float)):
             raise TypeError("initial_weight must be an int or float")
+        
+        if name is not None:
+            self.name = name
         self.initial_weight = initial_weight
-        self.strength = strength if strength is not None else initial_weight
+        self.strength = strength
+        self.attackers = attackers
+        self.supporters = supporters
+
+        if strength is None:
+            self.strength = initial_weight
+
+        if attackers is None:
+            self.attackers = {}
+
+        if supporters is None:
+            self.supporters = {}
+
+        self._initialized = True
         self.claim = claim
         self.premise = list(premise) if premise is not None else []
-        self.attackers = {}
-        self.supporters = {}
-        self._initialized = True
 
     def add_attacker(self, attacker, weight=1.0):
         if not isinstance(attacker, Argument):
@@ -62,12 +76,22 @@ class Argument:
             raise TypeError("support weight must be a number")
         self.supporters[supporter] = weight
 
+    def get_name(self):
+        return self.name
+    
+    def get_initial_weight(self):
+        return self.initial_weight
+    
     def __repr__(self):
         premise = ', '.join(a.name for a in self.premise)
+        if len(self.premise) == 0 and self.claim is None:
+            return f"Argument {self.name}: initial weight {self.initial_weight}, strength {self.strength}, attackers {self.attackers}, supporters {self.supporters}"
         return f"({[premise]},{self.claim})"
 
     def __str__(self):
         premise = ', '.join(a.name for a in self.premise)
+        if len(self.premise) == 0 and self.claim is None:
+            return f"Argument(name={self.name}, weight={self.initial_weight}, strength={self.strength})"
         return f"({[premise]},{self.claim})"
 
     def __hash__(self):
@@ -76,7 +100,7 @@ class Argument:
     def __eq__(self, other):
         if not isinstance(other, Argument):
             return False
-        return self.claim == other.claim and set(self.premise) == set(other.premise)
+        return self.claim == other.claim and set(self.premise) == set(other.premise) and self.name == other.name
 
     def __reduce__(self):
         ## To pickle the object, we need to provide a callable and its arguments
@@ -95,3 +119,8 @@ class Argument:
         self.supporters.clear()
         self.premise.clear()
         self.claim = None
+
+    @classmethod
+    def reset_identifiers(cls):
+        """Reset the used identifiers (for testing or reloading purposes)."""
+        cls._instances.clear()

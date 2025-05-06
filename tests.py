@@ -1052,9 +1052,9 @@ class TestBAG(unittest.TestCase):
 # TestBSAF().test_aba_bsaf_1()
 # TestBSAF().test_aba_bsaf_2()
 
-TestBSAF().test_convergence_single_file()
-TestBSAF().test_convergence_random_weight()
-TestBSAF().test_loading()
+# TestBSAF().test_convergence_single_file()
+# TestBSAF().test_convergence_random_weight()
+# TestBSAF().test_loading()
 
 TestBAG().test_convergence_single_file_flat()
 TestBAG().test_convergence_single_file_nonflat()

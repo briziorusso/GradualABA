@@ -1,3 +1,5 @@
 __pycache__/
 data_generation/abaf/bsaf_frameworks/
 data_generation/abaf/bag_frameworks/
+data_generation/abaf/bag_frameworks/nf_atm_s20_n0.01_a0.5_r2_b16_0randomSetMinAggregation.bag.pkl
+data_generation/abaf/bag_frameworks/nf_atm_s20_n0.01_a0.5_r2_b16_0SetMinAggregation.bag.pkl

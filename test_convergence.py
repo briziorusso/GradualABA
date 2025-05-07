@@ -6,8 +6,9 @@ from multiprocessing import Process, Queue
 from collections import defaultdict
 import random
 import traceback, sys
-import sys
 from decimal import Decimal
+import signal
+import sys
 sys.path.append("../")
 
 from ABAF import ABAF
@@ -39,7 +40,7 @@ TIMEOUT_SECONDS = 600     # per‐file timeout
 EPSILON         = 1e-3    # convergence epsilon
 DELTA           = 5       # convergence delta
 MAX_STEPS       = 5000    # max steps for convergence
-BASE_SCORES     = 'random' # 'random' or '' (empty==DEFAULT_WEIGHTS)
+BASE_SCORES     = '' # 'random' or '' (empty==DEFAULT_WEIGHTS)
 SET_AGGREGATION = SetMinAggregation() # SetProductAggregation() or SetMinAggregation()
 ASM_AGGREGATION  = SetMeanAggregation() # SetMinAggregation() or SetMeanAggregation()
 # ────────────────────────────────────────────────────────────────────────
@@ -171,9 +172,13 @@ def load_or_build_bsaf(aba_path: Path):
 
     # if cache exists and we're not overriding, just load
     if cache_file.exists() and not CACHE_OVERRIDE:
-        print(f"[CACHE HIT]   {aba_path.name}", flush=True)
-        with open(cache_file, "rb") as f:
-            return pickle.load(f)
+        try:
+            with open(cache_file, "rb") as f:
+                return pickle.load(f)
+        except EOFError:
+            # truncated or empty cache: remove and fall through to rebuild
+            print(f"[CACHE CORRUPT] {cache_file.name}, rebuilding…", flush=True)
+            cache_file.unlink()
 
     # otherwise we're (re)building
     if cache_file.exists() and CACHE_OVERRIDE:
@@ -190,38 +195,46 @@ def load_or_build_bsaf(aba_path: Path):
 
 def load_or_build_bag(aba_path: Path, weight_agg, args=None, abaf=None):
     """
-    Caches ABAF.to_baf() on disk under bsaf_cache/<stem>.bsaf.pkl.
+    Caches ABAF.to_bag() on disk under bag_cache/<stem>.bag.pkl.
     If CACHE_OVERRIDE is True, always rebuild (even if the cache file exists).
     """
-
-    Argument.reset_identifiers()  # reset the identifiers for the next run
-    Assumption.reset_identifiers()  # reset the identifiers for the next run
+    Argument.reset_identifiers()
+    Assumption.reset_identifiers()
 
     cache_file = CACHE_DIR_BAG / (aba_path.stem + f"{BASE_SCORES}{weight_agg.name}.bag.pkl")
 
-    # if cache exists and we're not overriding, just load
+    # 1) If cache exists and we're not forcing an override, try to load it
     if cache_file.exists() and not CACHE_OVERRIDE:
         print(f"[CACHE HIT]   {aba_path.name}", flush=True)
-        with open(cache_file, "rb") as f:
-            return pickle.load(f)
+        try:
+            with open(cache_file, "rb") as f:
+                return pickle.load(f)
+        except EOFError:
+            # truncated or empty cache: remove and fall through to rebuild
+            print(f"[CACHE CORRUPT] {cache_file.name}, rebuilding…", flush=True)
+            cache_file.unlink()
 
-    # otherwise we're (re)building
+    # 2) If we're explicitly overriding, or if the file didn't exist (or we just deleted it),
+    #    rebuild the BAG and re-cache it.
     if cache_file.exists() and CACHE_OVERRIDE:
         print(f"[OVERRIDE]    {aba_path.name}  (rebuilding cache)", flush=True)
-    else:
+    elif not cache_file.exists():
         print(f"[BUILDING]    {aba_path.name}", flush=True)
-    
+
     # build & cache
     if abaf is None:
         abaf = ABAF(path=str(aba_path))
+
+    # respect whether args were provided
     if args is None:
         bag = abaf.to_bag(weight_agg=weight_agg)
-    elif args is not None and abaf is not None:
-        bag = abaf.to_bag(weight_agg=weight_agg, args=args)
     else:
-        raise ValueError("Either args or abaf must be provided")
+        bag = abaf.to_bag(weight_agg=weight_agg, args=args)
+
+    # write out a fresh cache
     with open(cache_file, "wb") as f:
         pickle.dump(bag, f)
+
     return bag
 
 # 3) helper to decide whether to skip this file
@@ -387,9 +400,26 @@ def run_file_with_timeout(aba_path, params, runs, timeout):
             print(msg["__error__"], file=sys.stderr)
             raise RuntimeError(f"Worker for {aba_path.name} raised an exception")
 
+    if p.exitcode == -signal.SIGTERM:
+        print(f"⚠️  OOM on file {aba_path.name}")
+        return [
+            {
+                "file":      aba_path.name,
+                "file_path": str(aba_path),
+                "model":     model_name,
+                **params,
+                "convergence_time": None,
+                "timeout":         False,
+                "oom":             True,
+                "non_flat":        disk_non_flat(aba_path)
+            }
+            for model_name, _ in runs
+        ]
+    
     # 3) if child exitcode != 0 but no traceback, still bail
     if p.exitcode != 0:
-        raise RuntimeError(f"Worker for {aba_path.name} exited with code {p.exitcode} and no traceback")
+        raise RuntimeError(f"Worker for {aba_path.name} exited with code {p.exitcode} and no traceback. \n \
+                           Run: {aba_path.name}")
 
     # 4) otherwise we got a normal payload: our two entries
     return msg  # this is the 'entries' list from the child

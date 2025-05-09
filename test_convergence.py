@@ -40,14 +40,22 @@ TIMEOUT_SECONDS = 600     # per‐file timeout
 EPSILON         = 1e-3    # convergence epsilon
 DELTA           = 5       # convergence delta
 MAX_STEPS       = 5000    # max steps for convergence
-BASE_SCORES     = '' # 'random' or '' (empty==DEFAULT_WEIGHTS)
-SET_AGGREGATION = SetMinAggregation() # SetProductAggregation() or SetMinAggregation()
-ASM_AGGREGATION  = SetMeanAggregation() # SetMinAggregation() or SetMeanAggregation()
+BASE_SCORES     = 'random' # 'random' or '' (empty==DEFAULT_WEIGHTS)
+SET_AGGREGATION = SetProductAggregation() # SetProductAggregation() or SetMinAggregation()
+ASM_AGGREGATION  = 'SelectAsmArguments' # SetMeanAggregation() or SelectAsmArguments or SetMinAggregation()
 # ────────────────────────────────────────────────────────────────────────
 
 ## combine parameters into out name for the output file
 set_agg_name = 'prod' if isinstance(SET_AGGREGATION, SetProductAggregation) else 'min'
-asm_agg_name = 'mean' if isinstance(ASM_AGGREGATION, SetMeanAggregation) else 'min'
+if isinstance(ASM_AGGREGATION, SetMeanAggregation):
+    asm_agg_name = 'mean'
+elif isinstance(ASM_AGGREGATION, SetMinAggregation):
+    asm_agg_name = 'min'
+elif ASM_AGGREGATION == 'SelectAsmArguments':
+    asm_agg_name = 'sel'
+else:
+    raise ValueError(f"Unknown ASM aggregation: {ASM_AGGREGATION}")
+
 base_init = '_randinitall' if BASE_SCORES == 'random' else ''
 
 out_name = f"convergence_results_to{int(TIMEOUT_SECONDS / 60)}m_nf_atm_e{str('%.e' % Decimal(EPSILON))[-1]}_d{DELTA}_s{MAX_STEPS}{base_init}_{set_agg_name}_{asm_agg_name}.pkl"
@@ -130,7 +138,7 @@ BAG_RUNS = [
         set_aggregation = SET_AGGREGATION,
         ams_aggregation = ASM_AGGREGATION
     )),
-    ("QE      (BAF)", dict(
+    ("QE (BAF)", dict(
         klass        = DiscreteModularBAG,
         aggregation  = SumAggregation(),
         influence    = QuadraticMaximumInfluence(conservativeness=1),
@@ -209,7 +217,7 @@ def load_or_build_bag(aba_path: Path, weight_agg, args=None, abaf=None):
         try:
             with open(cache_file, "rb") as f:
                 return pickle.load(f)
-        except EOFError:
+        except:
             # truncated or empty cache: remove and fall through to rebuild
             print(f"[CACHE CORRUPT] {cache_file.name}, rebuilding…", flush=True)
             cache_file.unlink()
@@ -400,7 +408,9 @@ def run_file_with_timeout(aba_path, params, runs, timeout):
             print(msg["__error__"], file=sys.stderr)
             raise RuntimeError(f"Worker for {aba_path.name} raised an exception")
 
-    if p.exitcode == -signal.SIGTERM:
+    if p.exitcode == -signal.SIGTERM: 
+    ## This does not catch if it runs out of memory because of this file or
+    # another file running at the same time
         print(f"⚠️  OOM on file {aba_path.name}")
         return [
             {
@@ -441,7 +451,7 @@ if __name__ == "__main__":
               b=int(m.group("b"))
         ) if m else dict(s=None,n=None,a=None,r=None,b=None))
 
-        print(f"\n=== Running on {aba_path.name} ===", flush=True)
+        print(f"\n=== Running on {aba_path.name}, Scenario: {BASE_SCORES, set_agg_name, asm_agg_name} ===", flush=True)
 
         entries = run_file_with_timeout(aba_path, params, ALL_RUNS, TIMEOUT_SECONDS)
         results.extend(entries)

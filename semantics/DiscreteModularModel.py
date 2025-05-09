@@ -86,13 +86,18 @@ class DiscreteModularBAG(DiscreteModular):
             strengths[asm] = vals[:]  # copy if you plan to mutate
 
             if len(vals) > 1:
-                # build the state once
-                state = {i: s for i, s in enumerate(vals)}
-                idxs  = set(state.keys())
-                aggregated_strengths[asm] = agg_strength_f.aggregate_set(
-                    set=idxs,
-                    state=state
-                )
+                if agg_strength_f == 'SelectAsmArguments':
+                    ### fetch the singleton argument for this assumption i.e. premise == assumption
+                    vals = [a for a in all_args if a.premise == [asm]]
+                    aggregated_strengths[asm] = vals[0].strength
+                else:
+                    # build the state once
+                    state = {i: s for i, s in enumerate(vals)}
+                    idxs  = set(state.keys())
+                    aggregated_strengths[asm] = agg_strength_f.aggregate_set(
+                        set=idxs,
+                        state=state
+                    )
             else:
                 # just the single entry
                 aggregated_strengths[asm] = vals[0]

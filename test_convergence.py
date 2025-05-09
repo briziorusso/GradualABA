@@ -217,7 +217,7 @@ def load_or_build_bag(aba_path: Path, weight_agg, args=None, abaf=None):
         try:
             with open(cache_file, "rb") as f:
                 return pickle.load(f)
-        except:
+        except: #EOFError or _pickle.UnpicklingError:
             # truncated or empty cache: remove and fall through to rebuild
             print(f"[CACHE CORRUPT] {cache_file.name}, rebuilding…", flush=True)
             cache_file.unlink()

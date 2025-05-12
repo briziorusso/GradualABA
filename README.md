@@ -66,9 +66,9 @@ The experiments were run using the following command in the root folder:
 ```bash
 python test_convergence.py
 ```
-Note that only a subset of the parameters will be run automatically from this script. Options are provided at the top of the script.
+Note that only a subset of the parameters will be run automatically from this script. Config options are provided at the top of the script.
 
-Results are saved in `convergence_results/` and a notebook with all the plots in the paper is provided there.
+Results are saved in `convergence_results/` and [(convergence_results\plots.ipynb)](convergence_results\plots.ipynb) reproduces all the plots in the paper.
 
 ## 🚀 Installation
 
@@ -99,12 +99,12 @@ gradualABA/
 |   |-- bsafDiscreteModular.py     # for BSAFs
 |   |-- DiscreteModularModel.py    # for BAFs/BAGs
 |
-|-- convergence_results/          # convergence run outputs & notebook with plots
-|-- data_generation/              # scripts & data for generating ABAF inputs
-|-- examples/                     # sample ABAF files & usage notebooks
-|-- plotting/                     # plotting scripts
-|-- constants.py                  # global constants
-|-- tests.py                      # unit tests
-|-- test_convergence.py           # convergence tests
-|-- requirements.txt              # Python dependencies
-|-- README.md                     # this file
+|-- convergence_results/           # convergence run outputs & notebook with plots
+|-- data_generation/               # scripts & data for generating ABAF inputs
+|-- examples/                      # sample ABAF files & usage notebooks
+|-- plotting/                      # plotting scripts
+|-- constants.py                   # global constants
+|-- tests.py                       # unit tests
+|-- test_convergence.py            # convergence tests
+|-- requirements.txt               # Python dependencies
+|-- README.md                      # this file

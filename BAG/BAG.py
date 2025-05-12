@@ -1,13 +1,12 @@
 import os
 import re
 import string
-from BSAF.Argument import Argument
 from .Support import Support
 from .Attack import Attack
 
 class BAG:
 
-    def __init__(self, path=None):
+    def __init__(self, path=None, cont=False):
         """
         Bipolar Argumentation Graph:
         - arguments: dict mapping name -> Argument
@@ -18,12 +17,16 @@ class BAG:
         self.attacks = []
         self.supports = []
         self.path = path
-
+        self.cont = cont
         if path:
             self._load_from_file(path)
 
     def _load_from_file(self, path):
-        import os, re, string
+        if self.cont==True:
+            from BAG.Argument import Argument
+        else:
+            from BSAF.Argument import Argument
+
         self.arguments.clear()
         self.attacks.clear()
         self.supports.clear()
@@ -47,6 +50,10 @@ class BAG:
                     self.add_support(supporter, supported)
 
     def add_attack(self, attacker, attacked, attack_weight=1):
+        if self.cont==True:
+            from BAG.Argument import Argument
+        else:
+            from BSAF.Argument import Argument
         if not isinstance(attacker, Argument):
             raise TypeError("attacker must be of type Argument")
         if not isinstance(attacked, Argument):
@@ -59,6 +66,10 @@ class BAG:
         self.attacks.append(Attack(attacker, attacked, attack_weight))
 
     def add_support(self, supporter, supported, support_weight=1):
+        if self.cont==True:
+            from BAG.Argument import Argument
+        else:
+            from BSAF.Argument import Argument
         if not isinstance(supporter, Argument):
             raise TypeError("supporter must be of type Argument")
         if not isinstance(supported, Argument):

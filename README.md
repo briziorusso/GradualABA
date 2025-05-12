@@ -58,7 +58,7 @@ Example outputs trajectories when applying gradual ABA semantics:
 ![Strength evolution trajectories](examples/ex_trajectories.png)
 
 
-Additionally, we have adapted the example notebook from UP to run also discrete semantics instead of continuous only:[(examples\reproduce_truth_example.ipynb)](examples\reproduce_truth_example.ipynb)
+Additionally, we have adapted the example notebook from UP to run also discrete semantics instead of continuous only:[(examples/reproduce_truth_example.ipynb)](examples/reproduce_truth_example.ipynb)
 
 ## 🔬 Reproduce Experiments in the paper
 
@@ -68,7 +68,7 @@ python test_convergence.py
 ```
 Note that only a subset of the parameters will be run automatically from this script. Config options are provided at the top of the script.
 
-Results are saved in `convergence_results/` and [(convergence_results\plots.ipynb)](convergence_results\plots.ipynb) reproduces all the plots in the paper.
+Results are saved in `convergence_results/` and [(convergence_results/plots.ipynb)](convergence_results/plots.ipynb) reproduces all the plots in the paper.
 
 ## 🚀 Installation
 

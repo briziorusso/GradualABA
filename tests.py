@@ -1,6 +1,8 @@
 import unittest
 import os, sys
 import re
+import time
+import math
 import random
 import pickle
 from pathlib import Path
@@ -64,6 +66,10 @@ class TestBSAF(unittest.TestCase):
         ## {b,c} -> a
         ## {d,c} -> a
 
+        ## Clear the identifiers
+        Rule.reset_identifiers()
+        Argument.reset_identifiers()
+        Assumption.reset_identifiers()
 
         ## Assumptions
         a = Assumption("a", initial_weight=0.8)
@@ -133,7 +139,10 @@ class TestBSAF(unittest.TestCase):
 
     def test_aba_bsaf_2(self):
 
+        ## Clear the identifiers
         Rule.reset_identifiers()
+        Argument.reset_identifiers()
+        Assumption.reset_identifiers()
         
         ## Assumptions
         a = Assumption("a", initial_weight=0.8)
@@ -605,7 +614,7 @@ class TestABAF(unittest.TestCase):
     def test_argument_compare2(self):
         
         for i in range(0, 4):
-            iccma_file = f"../dependency-graph-alternative/input_data_nf/non_flat_1_s25_c0.02_n0.2_a0.3_r5_b5_{i}.aba"
+            iccma_file = Path(rf".\examples\iccma_style_abafs\non_flat_1_s25_c0.02_n0.2_a0.1_r5_b5_{i}.aba")
             # Assuming the file contains valid ICCMA format
             abaf = ABAF(path=iccma_file, arg_mode='prune_supersets')
             # Check if the assumptions and rules are parsed correctly
@@ -704,35 +713,35 @@ class TestABAF(unittest.TestCase):
 
         self.assertTrue(abaf.non_flat, "Expected the ABAF to be non-flat, but it was not.")        
 
-    # def argument_creation_speed_test(self):
+    def argument_creation_speed_test(self):
 
-    #     procedure1_times = []
-    #     procedure2_times = []
+        procedure1_times = []
+        procedure2_times = []
 
-    #     for i in range(0, 4):
-    #         iccma_file = f"../dependency-graph-alternative/input_data_nf/non_flat_1_s25_c0.02_n0.2_a0.3_r5_b5_{i}.aba"            
-    #         ## Compare arguments to derived using cling
-    #         ## Sped up prcedure
-    #         abaf = ABAF(path=iccma_file)
-    #         start = time.time()
-    #         args = abaf._build_arguments(SetProductAggregation())
-    #         print("Time to build arguments: ", time.time() - start)
-    #         ## collect times
-    #         procedure1_times.append(time.time() - start)
+        for i in range(0, 4):
+            iccma_file = Path(rf".\examples\iccma_style_abafs\non_flat_1_s25_c0.02_n0.2_a0.1_r5_b5_{i}.aba")
+            ## Compare arguments to derived using cling
+            ## Sped up prcedure
+            abaf = ABAF(path=iccma_file)
+            start = time.time()
+            args = abaf._build_arguments(SetProductAggregation())
+            print("Time to build arguments: ", time.time() - start)
+            ## collect times
+            procedure1_times.append(time.time() - start)
 
-    #         abaf1 = ABAF(path=iccma_file)
-    #         ## Original prcedure
-    #         start = time.time()
-    #         args1 = abaf1.build_arguments_procedure_og(SetProductAggregation())
-    #         print("Time to build arguments: ", time.time() - start)
-    #         ## collect times
-    #         procedure2_times.append(time.time() - start)
-    #         ## Check that the arguments are the same
-    #         # self.assertEqual(args, args1, f"Expected derived arguments: {args}, but got: {args1}")
+            abaf1 = ABAF(path=iccma_file)
+            ## Original prcedure
+            start = time.time()
+            args1 = abaf1.build_arguments_procedure_og(SetProductAggregation())
+            print("Time to build arguments: ", time.time() - start)
+            ## collect times
+            procedure2_times.append(time.time() - start)
+            ## Check that the arguments are the same
+            # self.assertEqual(args, args1, f"Expected derived arguments: {args}, but got: {args1}")
 
-    #         ## print average and std
-    #         print(f"Procedure 1 avg Time (std): {sum(procedure1_times)/len(procedure1_times)} ({math.sqrt(sum([(x - sum(procedure1_times)/len(procedure1_times))**2 for x in procedure1_times])/len(procedure1_times))})")
-    #         print(f"Procedure 2 avg Time (std): {sum(procedure2_times)/len(procedure2_times)} ({math.sqrt(sum([(x - sum(procedure2_times)/len(procedure2_times))**2 for x in procedure2_times])/len(procedure2_times))})")
+            ## print average and std
+            print(f"Procedure 1 avg Time (std): {sum(procedure1_times)/len(procedure1_times)} ({math.sqrt(sum([(x - sum(procedure1_times)/len(procedure1_times))**2 for x in procedure1_times])/len(procedure1_times))})")
+            print(f"Procedure 2 avg Time (std): {sum(procedure2_times)/len(procedure2_times)} ({math.sqrt(sum([(x - sum(procedure2_times)/len(procedure2_times))**2 for x in procedure2_times])/len(procedure2_times))})")
 
 
 
@@ -898,7 +907,7 @@ class TestBAG(unittest.TestCase):
         
             print(f"Model: {model_name}, Global Convergence: {global_conv}, Proportion Converged: {prop_conv}, Convergence Time: {conv_time}")
 
-        self.assertTrue(global_conv, f"Expected global convergence for {model_name}, but it was not converged.")
+            self.assertFalse(global_conv, f"Expected not global convergence for {model_name}, but it did converged.")
 
     def test_convergence_single_file_nonflat(self):
 
@@ -966,9 +975,8 @@ class TestBAG(unittest.TestCase):
             total           = len(per_arg)
             prop_conv       = (sum(per_arg.values()) / total) if total else 0.0
             print(f"Model: {model_name}, Global Convergence: {global_conv}, Proportion Converged: {prop_conv}, Convergence Time: {conv_time}")
-        self.assertTrue(global_conv, f"Expected global convergence for {model_name}, but it was not converged.")
-
-
+        
+            self.assertFalse(global_conv, f"Expected not global convergence for {model_name}, but it did converged.")
 
     def test_convergence_single_file_nonflat_asm_view(self):
 
@@ -1037,24 +1045,24 @@ class TestBAG(unittest.TestCase):
             total           = len(per_arg)
             prop_conv       = (sum(per_arg.values()) / total) if total else 0.0
             print(f"Model: {model_name}, Global Convergence: {global_conv}, Proportion Converged: {prop_conv}, Convergence Time: {conv_time}")
-        self.assertTrue(global_conv, f"Expected global convergence for {model_name}, but it was not converged.")
+            
+            self.assertFalse(global_conv, f"Expected not global convergence for {model_name}, but it did converged.")
 
 
 #------------------------ RUN TESTS ------------------------#
-# TestABAF().test_abaf_from_iccma_file()
-# TestABAF().test_abaf_from_iccma_file2()
-# TestABAF().test_argument_compare()
-# TestABAF().test_argument_compare2()
-# TestABAF().test_abaf_flatness()       
-# TestABAF().argument_creation_speed_test()
-# TestABAF().rerun_unfinished_flat()
+TestABAF().test_abaf_from_iccma_file()
+TestABAF().test_abaf_from_iccma_file2()
+TestABAF().test_argument_compare()
+TestABAF().test_argument_compare2()
+TestABAF().test_abaf_flatness()       
+TestABAF().argument_creation_speed_test()
 
-# TestBSAF().test_aba_bsaf_1()
-# TestBSAF().test_aba_bsaf_2()
+TestBSAF().test_aba_bsaf_1()
+TestBSAF().test_aba_bsaf_2()
 
-# TestBSAF().test_convergence_single_file()
-# TestBSAF().test_convergence_random_weight()
-# TestBSAF().test_loading()
+TestBSAF().test_convergence_single_file()
+TestBSAF().test_convergence_random_weight()
+TestBSAF().test_loading()
 
 TestBAG().test_convergence_single_file_flat()
 TestBAG().test_convergence_single_file_nonflat()

@@ -1,0 +1,76 @@
+p aba 25
+a a0
+a a1
+c a0 s13
+c a1 s21
+r s12 a1 a0
+r s12 a1
+r s12 a0 a1
+r s12 a0 a0
+r s12 a0
+r s19 a1
+r s4 a0 s12
+r s4 s12 a1 a0 s19
+r s4 s12
+r s4 a1 s19
+r s4 a0 s12 a1 a0
+r s7 s19
+r s7 a1 a1 a0 s19 a0
+r s7 s4 s12 a1 a0 a0
+r s16 a1 s4 s7 a0 s19
+r s16 a0 a0 s12 a1 s7
+r s16 a0
+r s16 a1 s19
+r s16 a1 s12
+r s14 a1
+r s14 s16
+r s14 s19 a0 a1
+r s0 s12 a0
+r s18 s0 s16 s7
+r s18 s14 s7
+r s18 s16 s19 s0
+r s18 a1 a1 a0 s0 s16
+r s18 a0 s12
+r s13 s14 s16
+r s13 s14 s19
+r s2 s18 s14
+r s2 a1 s16 s12 s0
+r s2 s0 a0 s4 s7
+r s6 s0 s4 s18
+r s9 a1 a1 s0 s18 s12
+r s9 s18 s19
+r s17 s19 s4 s2 a0 s9
+r s17 s13 a0 s14 a1
+r s17 s16
+r s17 a1
+r s17 s2 a1 s19 s0 s6
+r s10 s16 s12 s2
+r s10 s16 a0
+r s10 s13
+r s8 a1 s10 s19 s16
+r s8 s9 a1 s18
+r s20 s10 s16 a1
+r s20 s19
+r s20 s13 s19 s18
+r s20 s10 s13 s9 s12 s17
+r s20 s17
+r s21 s12 s13
+r s21 s16 a1 s18 s7 s2
+r s22 s6 s18
+r s22 s17 s14 s16 s2
+r s22 s7 s14 a0 s20 s2
+r s22 a0 s21 s20
+r s15 s19
+r s15 a1 a0 s14 s10 s9
+r s11 s22 s17 s12 s9
+r s3 s22 s10 s15 a1 s13
+r s3 s20
+r s3 s11 a0
+r s3 s15 s10 s11 s18
+r s1 s22 s20 a1 s6 s19
+r s1 s7 s19 a0 s18 s12
+r s5 a1 s2 s9
+r s5 s19 s18 a1 s0
+r s5 s10 s3
+r s5 s14
+r s5 s9 s14 s16

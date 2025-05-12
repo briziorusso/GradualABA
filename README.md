@@ -40,6 +40,26 @@ Under the hood, most semantics repeatedly
 
 ---
 
+## 🏃‍♂️ Quickstart Example
+
+The best way to get started is to go through the example notebook: [(examples/simple_demo_example.ipynb)](examples/simple_demo_example.ipynb)
+
+There, we have the application of the ABAF gradual semantics based on BSAFs and BAGs for both Df-QuAD and QE. The process involves:
+- Load an ABAF from file
+- Convert ABAF to BSAF or BAF
+- Chose your modules for
+        - Aggregation
+        - Influence
+        - Attk/Supp or Base-Score Aggregations (for BSAFs and BAGs, respectively)
+        - Assumption Aggregation (for BAGs only)
+- Plot and check convergence
+
+Example outputs trajectories when applying gradual ABA semantics:
+![Strength evolution trajectories](examples/ex_trajectories.png)
+
+
+Additionally, we have adapted the example notebook from UP to run also discrete semantics instead of continuous only:[(examples\reproduce_truth_example.ipynb)](examples\reproduce_truth_example.ipynb)
+
 ## 🔬 Reproduce Experiments in the paper
 
 The experiments were run using the following command in the root folder:

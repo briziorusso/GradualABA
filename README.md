@@ -79,7 +79,9 @@ The experiments were run using the following command in the root folder:
 ```bash
 python test_convergence.py
 ```
-Note that only a subset of the parameters will be run automatically from this script. Config options are provided at the top of the script.
+Note that only a subset of the parameters will be run automatically from this script, namely: Random Base Score Init, Product Set Aggregation and Mean Assumption Strength. Config options are provided at the top of the script and should be self explanatory. 
+
+*Please note that the full run (as configured by default) will take hours to run.*
 
 Results are saved in `convergence_results/` and [(convergence_results/plots.ipynb)](convergence_results/plots.ipynb) reproduces all the plots in the paper.
 

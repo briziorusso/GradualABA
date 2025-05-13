@@ -35,8 +35,8 @@ RESULT_OVERRIDE = False # set to True to override existing results
 
 SEED            = 42      # random seed for reproducibility
 MAX_FILES       = 0       # 0 = no limit
-MIN_SENTENCES   = 0
-MAX_SENTENCES   = 100
+MIN_SENTENCES   = 0       # Minimum sentence in the filename
+MAX_SENTENCES   = 100     # Maximum sentence in the filename
 TIMEOUT_SECONDS = 600     # per‐file timeout
 EPSILON         = 1e-3    # convergence epsilon
 DELTA           = 5       # convergence delta

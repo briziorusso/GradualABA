@@ -29,7 +29,7 @@ from semantics.modular.QuadraticMaximumInfluence import QuadraticMaximumInfluenc
 INPUT_DIR       = Path("data_generation/abaf/").resolve()
 CACHE_DIR       = Path(INPUT_DIR,"bsaf_frameworks")
 CACHE_DIR_BAG   = Path(INPUT_DIR,"bag_frameworks")
-OUTPUT_DIR       = Path("convergence_results/").resolve()
+OUTPUT_DIR      = Path("convergence_results/").resolve()
 CACHE_OVERRIDE  = False # set to True to override existing cache files
 RESULT_OVERRIDE = False # set to True to override existing results
 
@@ -43,7 +43,7 @@ DELTA           = 5       # convergence delta
 MAX_STEPS       = 5000    # max steps for convergence
 BASE_SCORES     = 'random' # 'random' or '' (empty==DEFAULT_WEIGHTS)
 SET_AGGREGATION = SetProductAggregation() # SetProductAggregation() or SetMinAggregation()
-ASM_AGGREGATION  = 'SelectAsmArguments' # SetMeanAggregation() or SelectAsmArguments or SetMinAggregation()
+ASM_AGGREGATION  = SetMeanAggregation() # SetMeanAggregation() or 'SelectAsmArguments'
 # ────────────────────────────────────────────────────────────────────────
 
 ## combine parameters into out name for the output file
@@ -104,32 +104,19 @@ param_pat = re.compile(
     r"b(?P<b>\d+)"
 )
 
-# RUNS = [
-#     ("DF-QuAD", dict(
-#         aggregation     = ProductAggregation(),
-#         influence       = LinearInfluence(conservativeness=1),
-#         set_aggregation = SET_AGGREGATION
-#     )),
-#     ("QE", dict(
-#         aggregation     = SumAggregation(),
-#         influence       = QuadraticMaximumInfluence(conservativeness=1),
-#         set_aggregation = SET_AGGREGATION
-#     )),
-# ]
-
 BSAF_RUNS = [
-    # ("DF-QuAD (BSAF)", dict(
-    #     klass        = DiscreteModular,
-    #     aggregation  = ProductAggregation(),
-    #     influence    = LinearInfluence(conservativeness=1),
-    #     set_aggregation = SET_AGGREGATION
-    # )),
-    # ("QE      (BSAF)", dict(
-    #     klass        = DiscreteModular,
-    #     aggregation  = SumAggregation(),
-    #     influence    = QuadraticMaximumInfluence(conservativeness=1),
-    #     set_aggregation = SET_AGGREGATION
-    # )),
+    ("DF-QuAD (BSAF)", dict(
+        klass        = DiscreteModular,
+        aggregation  = ProductAggregation(),
+        influence    = LinearInfluence(conservativeness=1),
+        set_aggregation = SET_AGGREGATION
+    )),
+    ("QE      (BSAF)", dict(
+        klass        = DiscreteModular,
+        aggregation  = SumAggregation(),
+        influence    = QuadraticMaximumInfluence(conservativeness=1),
+        set_aggregation = SET_AGGREGATION
+    )),
 ]
 
 BAG_RUNS = [

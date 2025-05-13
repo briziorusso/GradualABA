@@ -29,6 +29,7 @@ from semantics.modular.QuadraticMaximumInfluence import QuadraticMaximumInfluenc
 INPUT_DIR       = Path("data_generation/abaf/").resolve()
 CACHE_DIR       = Path(INPUT_DIR,"bsaf_frameworks")
 CACHE_DIR_BAG   = Path(INPUT_DIR,"bag_frameworks")
+OUTPUT_DIR       = Path("convergence_results/").resolve()
 CACHE_OVERRIDE  = False # set to True to override existing cache files
 RESULT_OVERRIDE = False # set to True to override existing results
 
@@ -60,12 +61,13 @@ base_init = '_randinitall' if BASE_SCORES == 'random' else ''
 
 out_name = f"convergence_results_to{int(TIMEOUT_SECONDS / 60)}m_nf_atm_e{str('%.e' % Decimal(EPSILON))[-1]}_d{DELTA}_s{MAX_STEPS}{base_init}_{set_agg_name}_{asm_agg_name}.pkl"
 
-OUTPUT_PKL = Path(out_name)
+OUTPUT_PKL = Path(OUTPUT_DIR,out_name)
 
-TIMEOUT_RECORD  = CACHE_DIR / f"timed_out_{TIMEOUT_SECONDS}s.txt"
+TIMEOUT_RECORD  = INPUT_DIR / f"00_timed_out_{TIMEOUT_SECONDS}s.txt"
 TIMEOUT_RECORD.touch(exist_ok=True)
 CACHE_DIR.mkdir(exist_ok=True)
 CACHE_DIR_BAG.mkdir(exist_ok=True)
+OUTPUT_DIR.mkdir(exist_ok=True)
 # random.seed(SEED)
 
 # ─── 0) LOAD the set of already‐timed‐out stems ─────────────────────────

@@ -4,3 +4,4 @@ numpy
 PyQt6 # for plots
 clingo
 pysat
+tqdm

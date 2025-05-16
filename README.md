@@ -40,6 +40,19 @@ Under the hood, most semantics repeatedly
 
 ---
 
+## 🚀 Installation
+
+```bash
+git clone https://github.com/yourusername/gradualABA.git
+cd gradualABA
+
+# (optional) create and activate a virtual environment
+python3 -m venv gradaba
+source gradaba/bin/activate
+
+pip install -r requirements.txt
+```
+
 ## 🏃‍♂️ Quickstart Example
 
 The best way to get started is to go through the example notebook: [(examples/simple_demo_example.ipynb)](examples/simple_demo_example.ipynb)
@@ -66,22 +79,11 @@ The experiments were run using the following command in the root folder:
 ```bash
 python test_convergence.py
 ```
-Note that only a subset of the parameters will be run automatically from this script. Config options are provided at the top of the script.
+Note that only a subset of the parameters will be run automatically from this script, namely: Random Base Score Init, Product Set Aggregation and Mean Assumption Strength. Config options are provided at the top of the script and should be self explanatory. 
+
+*Please note that the full run (as configured by default) will take hours to run.*
 
 Results are saved in `convergence_results/` and [(convergence_results/plots.ipynb)](convergence_results/plots.ipynb) reproduces all the plots in the paper.
-
-## 🚀 Installation
-
-```bash
-git clone https://github.com/yourusername/gradualABA.git
-cd gradualABA
-
-# (optional) create and activate a virtual environment
-python3 -m venv gradaba
-source gradaba/bin/activate
-
-pip install -r requirements.txt
-```
 
 ## 📂 Repo structure
 

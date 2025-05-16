@@ -9,6 +9,7 @@ import traceback, sys
 from decimal import Decimal
 import signal
 import sys
+import time
 sys.path.append("../")
 
 from ABAF import ABAF
@@ -29,21 +30,26 @@ from semantics.modular.QuadraticMaximumInfluence import QuadraticMaximumInfluenc
 INPUT_DIR       = Path("data_generation/abaf/").resolve()
 CACHE_DIR       = Path(INPUT_DIR,"bsaf_frameworks")
 CACHE_DIR_BAG   = Path(INPUT_DIR,"bag_frameworks")
+OUTPUT_DIR      = Path("convergence_results/").resolve()
 CACHE_OVERRIDE  = False # set to True to override existing cache files
-RESULT_OVERRIDE = False # set to True to override existing results
+RESULT_OVERRIDE = True # set to True to override existing results
 
 SEED            = 42      # random seed for reproducibility
 MAX_FILES       = 0       # 0 = no limit
-MIN_SENTENCES   = 0
-MAX_SENTENCES   = 100
+MIN_SENTENCES   = 0       # Minimum sentence in the filename
+MAX_SENTENCES   = 100     # Maximum sentence in the filename
 TIMEOUT_SECONDS = 600     # per‐file timeout
 EPSILON         = 1e-3    # convergence epsilon
 DELTA           = 5       # convergence delta
 MAX_STEPS       = 5000    # max steps for convergence
 BASE_SCORES     = 'random' # 'random' or '' (empty==DEFAULT_WEIGHTS)
 SET_AGGREGATION = SetProductAggregation() # SetProductAggregation() or SetMinAggregation()
-ASM_AGGREGATION  = 'SelectAsmArguments' # SetMeanAggregation() or SelectAsmArguments or SetMinAggregation()
+ASM_AGGREGATION  = SetMeanAggregation() # SetMeanAggregation() or 'SelectAsmArguments'
 # ────────────────────────────────────────────────────────────────────────
+
+CACHE_DIR.mkdir(exist_ok=True)
+CACHE_DIR_BAG.mkdir(exist_ok=True)
+OUTPUT_DIR.mkdir(exist_ok=True)
 
 ## combine parameters into out name for the output file
 set_agg_name = 'prod' if isinstance(SET_AGGREGATION, SetProductAggregation) else 'min'
@@ -60,22 +66,28 @@ base_init = '_randinitall' if BASE_SCORES == 'random' else ''
 
 out_name = f"convergence_results_to{int(TIMEOUT_SECONDS / 60)}m_nf_atm_e{str('%.e' % Decimal(EPSILON))[-1]}_d{DELTA}_s{MAX_STEPS}{base_init}_{set_agg_name}_{asm_agg_name}.pkl"
 
-OUTPUT_PKL = Path(out_name)
+OUTPUT_PKL = Path(OUTPUT_DIR,out_name)
 
-TIMEOUT_RECORD  = CACHE_DIR / f"timed_out_{TIMEOUT_SECONDS}s.txt"
-TIMEOUT_RECORD.touch(exist_ok=True)
-CACHE_DIR.mkdir(exist_ok=True)
-CACHE_DIR_BAG.mkdir(exist_ok=True)
-# random.seed(SEED)
-
-# ─── 0) LOAD the set of already‐timed‐out stems ─────────────────────────
-with open(TIMEOUT_RECORD, "r") as f:
-    timed_out_stems = { line.strip() for line in f if line.strip() }
+TIMEOUT_RECORD  = INPUT_DIR / f"00_timed_out_{TIMEOUT_SECONDS}s.txt"
+try:
+    # ─── 0) LOAD the set of already‐timed‐out stems ─────────────────────────
+    with open(TIMEOUT_RECORD, "r") as f:
+        timed_out_stems = { line.strip() for line in f if line.strip() }
+    exclude_timeouts = True
+except FileNotFoundError:
+    print("No timeout record found, ignoring timeouts exclusion.")
+    exclude_timeouts = False
 
 # 1) if OUTPUT_PKL exists, load it; otherwise start empty
-if OUTPUT_PKL.exists():
+if OUTPUT_PKL.exists() and not RESULT_OVERRIDE:
+    print(f"⚠️  WARNING: {OUTPUT_PKL.name} already exists, appending results.")
     with open(OUTPUT_PKL, "rb") as f:
         results = pickle.load(f)
+if OUTPUT_PKL.exists() and RESULT_OVERRIDE:
+    print(f"⚠️  WARNING: {OUTPUT_PKL.name} already exists and overriding, changing output name.")
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    OUTPUT_PKL = OUTPUT_DIR / f"convergence_results_to{int(TIMEOUT_SECONDS / 60)}m_nf_atm_e{str('%.e' % Decimal(EPSILON))[-1]}_d{DELTA}_s{MAX_STEPS}{base_init}_{set_agg_name}_{asm_agg_name}_{timestamp}.pkl"
+    results = []
 else:
     results = []
 
@@ -89,8 +101,10 @@ aba_paths = [
     p for p in all_aba
     if (m := pattern_s.search(p.name))
        and MIN_SENTENCES <= int(m.group(1)) <= MAX_SENTENCES
-       and p.stem not in timed_out_stems     # skip timed‐out files
 ]
+if exclude_timeouts:# skip timed‐out files
+    aba_paths = [p for p in aba_paths if p.stem not in timed_out_stems]
+
 if MAX_FILES > 0:
     aba_paths = aba_paths[:MAX_FILES]
 
@@ -102,32 +116,19 @@ param_pat = re.compile(
     r"b(?P<b>\d+)"
 )
 
-# RUNS = [
-#     ("DF-QuAD", dict(
-#         aggregation     = ProductAggregation(),
-#         influence       = LinearInfluence(conservativeness=1),
-#         set_aggregation = SET_AGGREGATION
-#     )),
-#     ("QE", dict(
-#         aggregation     = SumAggregation(),
-#         influence       = QuadraticMaximumInfluence(conservativeness=1),
-#         set_aggregation = SET_AGGREGATION
-#     )),
-# ]
-
 BSAF_RUNS = [
-    # ("DF-QuAD (BSAF)", dict(
-    #     klass        = DiscreteModular,
-    #     aggregation  = ProductAggregation(),
-    #     influence    = LinearInfluence(conservativeness=1),
-    #     set_aggregation = SET_AGGREGATION
-    # )),
-    # ("QE      (BSAF)", dict(
-    #     klass        = DiscreteModular,
-    #     aggregation  = SumAggregation(),
-    #     influence    = QuadraticMaximumInfluence(conservativeness=1),
-    #     set_aggregation = SET_AGGREGATION
-    # )),
+    ("DF-QuAD (BSAF)", dict(
+        klass        = DiscreteModular,
+        aggregation  = ProductAggregation(),
+        influence    = LinearInfluence(conservativeness=1),
+        set_aggregation = SET_AGGREGATION
+    )),
+    ("QE      (BSAF)", dict(
+        klass        = DiscreteModular,
+        aggregation  = SumAggregation(),
+        influence    = QuadraticMaximumInfluence(conservativeness=1),
+        set_aggregation = SET_AGGREGATION
+    )),
 ]
 
 BAG_RUNS = [

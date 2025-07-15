@@ -1,6 +1,6 @@
 # GradualABA
 
-A Python framework for **gradual semantics** in Assumption-Based Argumentation (ABA).  
+A Python framework for **gradual semantics** in Assumption-Based Argumentation (ABA).  This repository provides the code for the paper "On Gradual Semantics for Assumption-Based Argumentation". 
 
 It implements a variety of discrete gradual argumentation models over ABAFs, and builds on the core modular semantics and algorithms from [Uncertainpy](https://github.com/nicopotyka/Uncertainpy) (UP).
 
@@ -110,3 +110,19 @@ gradualABA/
 |-- test_convergence.py            # convergence tests
 |-- requirements.txt               # Python dependencies
 |-- README.md                      # this file
+```
+
+
+## Reference
+If you are using this code, please cite our paper
+```
+@misc{rapberger2025gradualaba,
+      title={On Gradual Semantics for Assumption-Based Argumentation}, 
+      author={Anna Rapberger and Fabrizio Russo and Antonio Rago and Francesca Toni},
+      year={2025},
+      eprint={2507.10076},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2507.10076}, 
+}
+```
